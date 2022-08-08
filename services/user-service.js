@@ -1,5 +1,7 @@
 const UserModel = require('../models/user-model')
 const bcrypt = require('bcrypt')
+const UserDto = require('../dto/user-dto')
+const tokenService = require('./token-service')
 
 class UserService {
 
@@ -13,8 +15,15 @@ class UserService {
     const hashPassword = await bcrypt.hash(password, 3);
 
     const user = await UserModel.create({ email, username, password: hashPassword});
-    
-    return user;
+
+    const userDto = new UserDto(user);
+    const tokens = tokenService.generateTokens({...userDto}); // without class
+    user.token = tokens.accessToken
+
+    await user.save()
+    await tokenService.saveToken(userDto.id, tokens.refreshToken)
+
+    return { ...tokens, user: userDto }
   }
   
   // -------------------------------- Signing in -------------------------------- //
@@ -28,8 +37,15 @@ class UserService {
     if (!isPasswordEqual) {
       throw Error('wrong credentials');
     }
-    
-    return user;
+
+    const userDto = new UserDto(user);
+    const tokens = tokenService.generateTokens({...userDto})
+
+    user.token = tokens.accessToken
+    await user.save()
+    await tokenService.saveToken(userDto.id, tokens.refreshToken)
+
+    return { ...tokens, user: userDto }
   }
 
   
