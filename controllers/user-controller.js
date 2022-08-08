@@ -1,4 +1,5 @@
 const userService = require('../services/user-service')
+const { validationResult } = require('express-validator');
 
 class UserController {
   
@@ -6,6 +7,13 @@ class UserController {
 
   async register(req, res) {
     try {
+          const errors = validationResult(req)
+          if (!errors.isEmpty()) {
+              return res.json({ 
+              message : "Validation failed, username and password length must be at least 5 characters each!", 
+              errors :errors.array() 
+            });
+          }
           const { email, password, username } = req.body;
           const userData = await userService.register(email, password, username)
 
