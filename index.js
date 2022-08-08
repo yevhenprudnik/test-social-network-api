@@ -3,8 +3,12 @@ require('dotenv').config()
 const PORT = process.env.PORT || 3000;
 const app = express();
 const mongoose = require('mongoose');
+const router = require('./route/index');
+
+
 
 app.use( express.json() );
+app.use( '/api', router );
 
 
 app.get('/', (req, res) => {
