@@ -1,4 +1,5 @@
-const userService = require('../services/user-service')
+const userService = require('../services/user-service');
+const tokenService = require('../services/token-service');
 const { validationResult } = require('express-validator');
 const ApiError = require('../exceptions/api-error');
 
@@ -34,12 +35,25 @@ class UserController {
     }
   }
 
+  // -------------------------------- Signing out -------------------------------- //
+
+  async signOut(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const data = await tokenService.removeToken(userId);
+
+      return res.json(data);
+    } catch (error) {
+      next(error)
+    }
+  }
+
 // ------------------------------ Auth ----------------------------- //
 
   async auth(req, res, next) {
     try {
         const userData = req.user
-        const additionalData = await userService.getUserData(userData.id);
+        const additionalData = await userService.getUserData(userData.id); //additional data for client
         res.json({userData, additionalData});
     } catch (error) {
       next(error)
@@ -91,6 +105,34 @@ class UserController {
         return res.json('confirmed');
     } catch (error) {
       next(error);
+    }
+  }
+
+// ------------------------------ Follow -------------------------------- //
+
+  async follow(req, res, next) {
+    try {
+      const { userToFollow } = req.body;
+      const userId = req.user.id;
+      const user = await userService.follow(userId, userToFollow);
+      
+      return res.json(user);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+// ------------------------------ Unfollow -------------------------------- //
+
+  async unfollow(req, res, next) {
+    try {
+      const { userToUnfollow } = req.body;
+      const userId = req.user.id;
+      const user = await userService.unfollow(userId, userToUnfollow);
+      
+      return res.json(user);
+    } catch (error) {
+      next(error)
     }
   }
 

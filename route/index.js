@@ -15,6 +15,9 @@ router.post('/register',
   userController.register
 );
 router.post('/signIn', userController.signIn);
+router.post('/signOut', authMiddleware, userController.signOut);
+router.post('/follow',authMiddleware, userController.follow);
+router.post('/unfollow', authMiddleware, userController.unfollow);
 router.get('/auth', authMiddleware, userController.auth);
 router.get('/refresh', userController.refresh);
 router.get('/confirmEmail/:link', userController.confirmEmail);

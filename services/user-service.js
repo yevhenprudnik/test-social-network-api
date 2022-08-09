@@ -56,7 +56,7 @@ class UserService {
     return { ...tokens, user: userDto };
   }
 
-  // -------------------------------- Refresh Token -------------------------------- //
+// -------------------------------- Refresh Token -------------------------------- //
 
   async refresh(refreshToken) {
     if (!refreshToken) {
@@ -100,6 +100,50 @@ class UserService {
       throw ApiError.BadRequest('User is not found')
     }
     return user;
+  }
+  
+// ----------------------------- Follow ----------------------------------- //
+
+  async follow(userId, userToFollowId){
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw ApiError.BadRequest('User is not found');
+    }
+    if (user.following.includes(userToFollowId)) {
+      throw ApiError.BadRequest('You are already following this user');
+    }
+    user.following.push(userToFollowId);
+    await user.save();
+
+    const userToFollow = await UserModel.findById(userToFollowId);
+    userToFollow.followers.push(userId);
+
+    await userToFollow.save();
+    return user.following;
+  }
+  
+// ----------------------------- Unfollow ----------------------------------- //
+  
+  async unfollow(userId, userToUnfollowId){
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw ApiError.BadRequest('User is not found');
+    }
+    const following = user.following;
+    const userIndex = following.indexOf(userToUnfollowId);
+    if (userIndex < 0) {
+      throw ApiError.BadRequest('You are not following this user');
+    }
+
+    user.following.splice(userIndex, 1);
+    await user.save();
+
+    const userToUnfollow = await UserModel.findById(userToUnfollowId);
+    const userToUnfollowIndex = userToUnfollow.followers.indexOf(userId);
+    userToUnfollow.followers.splice(userToUnfollowIndex, 1);
+    
+    await userToUnfollow.save();
+    return user.following;
   }
   
 }

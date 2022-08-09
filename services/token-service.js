@@ -50,6 +50,11 @@ class TokenService {
     return tokenData;
   }
 
+  async removeToken(user) {
+    const tokenData = await tokenModel.deleteOne({ user });
+    return tokenData;
+  }
+
 }
 
 module.exports = new TokenService();
