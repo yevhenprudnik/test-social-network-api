@@ -25,7 +25,7 @@ class TokenService {
 
   async validateAccessToken(token) {
     try {
-      const user  = await userModel.findOne({token})
+      const user = await userModel.findOne({token})
       if(user.token !== token){
         return null
       }

@@ -1,8 +1,9 @@
-const UserModel = require('../models/user-model')
-const bcrypt = require('bcrypt')
-const UserDto = require('../dto/user-dto')
-const tokenService = require('./token-service')
-
+const UserDto = require('../dto/user-dto');
+const UserModel = require('../models/user-model');
+const bcrypt = require('bcrypt');
+const tokenService = require('./token-service');
+const mailService = require('./mail-service');
+const uuid = require('uuid');
 class UserService {
 
   // -------------------------------- Registration -------------------------------- //
@@ -13,8 +14,10 @@ class UserService {
       throw Error('user is already registered');
     }
     const hashPassword = await bcrypt.hash(password, 3);
+    const emailConfirmationLink = uuid.v4();
 
-    const user = await UserModel.create({ email, username, password: hashPassword});
+    const user = await UserModel.create({ email, username, password: hashPassword, emailConfirmationLink});
+    await mailService.sendActionMail(email, `${process.env.API_URL}/api/confirmEmail/${emailConfirmationLink}`);
 
     const userDto = new UserDto(user);
     const tokens = tokenService.generateTokens({...userDto}); // without class
@@ -73,6 +76,23 @@ class UserService {
     return { ...tokens, user: userDto };
   }
 
+  // -------------------------------- Email Confirmation -------------------------------- //
+
+  async confirmEmail(emailConfirmationLink) {
+    const user = await UserModel.findOne({ emailConfirmationLink })
+    if (!user) {
+      throw Error('Bad request');
+    }
+    user.confirmedEmail = true;
+    await user.save();
+  }
+
+// ------------------------------ Additional Data ------------------------------ //
+
+  async getUserData(userId){
+    const user = await UserModel.findById(userId).select('confirmedEmail');
+    return user
+  }
   
 }
 

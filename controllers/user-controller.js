@@ -3,7 +3,7 @@ const { validationResult } = require('express-validator');
 
 class UserController {
   
-  // -------------------------------- Registration -------------------------------- //
+// -------------------------------- Registration -------------------------------- //
 
   async register(req, res) {
     try {
@@ -23,7 +23,7 @@ class UserController {
     }
   }
 
-  // -------------------------------- Signing in -------------------------------- //
+// -------------------------------- Signing in -------------------------------- //
 
   async signIn(req, res) {
     try {
@@ -36,18 +36,19 @@ class UserController {
     }
   }
 
-  // ------------------------------ Auth ----------------------------- //
+// ------------------------------ Auth ----------------------------- //
 
   async auth(req, res) {
     try {
         const userData = req.user
-        res.json(userData)
+        const additionalData = await userService.getUserData(userData.id);
+        res.json({userData, additionalData});
     } catch (error) {
       res.json(error.message);
     }
   }
 
-    // -------------------------------- Refresh Token -------------------------------- //
+// -------------------------------- Refresh Token -------------------------------- //
 
     async refresh(req, res) {
       try {
@@ -68,6 +69,20 @@ class UserController {
         res.json(error.message);
       }
     }
+
+// -------------------------------- Email Confirmation -------------------------------- //
+
+  async confirmEmail(req, res, next) {
+    try {
+        const activationLink = req.params.link;
+        await userService.confirmEmail(activationLink);
+
+        //return res.redirect(process.env.CLIENT_URL);
+        return res.json('confirmed');
+    } catch (error) {
+      next(error);
+    }
+  }
 
 }
 
