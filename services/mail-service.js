@@ -22,8 +22,8 @@ class MailService {
       html:
         `
           <div>
-            <h1>To confirm email follow the link below</h1>
-            <a href="${link}">"${link}"</a>
+            <h1>To confirm your email click the button below</h1>
+            <button href="${link}">CONFIRM</button>
           </div>
         `
     })

@@ -10,14 +10,18 @@ class UserService {
   // -------------------------------- Registration -------------------------------- //
   
   async register(email, password, username) {
-    const candidate = await UserModel.findOne({ email }); // Check if user is already registered
-    if (candidate) {
+    const candidateByEmail = await UserModel.findOne({ email }); // Check if user is already registered
+    if (candidateByEmail) {
       throw ApiError.BadRequest(`User ${email} is already registered`)
+    }
+    const candidateByUsername = await UserModel.findOne({ username });
+    if (candidateByUsername) {
+      throw ApiError.BadRequest(`User ${username} is already registered`)
     }
     const hashPassword = await bcrypt.hash(password, 3);
     const emailConfirmationLink = uuid.v4();
 
-    const user = await UserModel.create({ email, username, password: hashPassword, emailConfirmationLink});
+    const user = await UserModel.create({ email, username, password: hashPassword, emailConfirmationLink, memberSince: new Date() });
     await mailService.sendActionMail(email, `${process.env.API_URL}/api/confirmEmail/${emailConfirmationLink}`);
 
     const userDto = new UserDto(user);
@@ -35,7 +39,7 @@ class UserService {
   async signIn(email, password) {
     const user = await UserModel.findOne({ email })
     if (!user) {
-      throw ApiError.BadRequest('User is not found')
+      throw ApiError.BadRequest('User is not found');
     }
     const isPasswordEqual = await bcrypt.compare(password, user.password);
     if (!isPasswordEqual) {
@@ -91,7 +95,7 @@ class UserService {
 // ------------------------------ Additional Data ------------------------------ //
 
   async getUserData(userId){
-    const user = await UserModel.findById(userId).select('confirmedEmail');
+    const user = await UserModel.findById(userId).select('confirmedEmail username email');
     if (!user) {
       throw ApiError.BadRequest('User is not found')
     }

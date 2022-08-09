@@ -8,7 +8,7 @@ class UserController {
 
   async register(req, res, next) {
     try {
-          const errors = validationResult(req)
+          const errors = validationResult(req);
           if (!errors.isEmpty()) {
             return next(ApiError.BadRequest('Validation failed, username and password length must be at least 5 characters each', errors.array()))
           }
@@ -68,13 +68,25 @@ class UserController {
       }
     }
 
+// ------------------------------ Get User -------------------------------- //
+
+  async getUser(req, res, next) {
+    try {
+        const user = await userService.getUserData(req.query.id)
+        res.json(user)
+        
+    } catch (error) {
+      next(error)
+    }
+  }
+
 // -------------------------------- Email Confirmation -------------------------------- //
 
   async confirmEmail(req, res, next) {
     try {
         const activationLink = req.params.link;
         await userService.confirmEmail(activationLink);
-        
+
         //return res.redirect(process.env.CLIENT_URL);
         return res.json('confirmed');
     } catch (error) {
