@@ -7,6 +7,7 @@ const UserSchema = new Schema({
   token: { type: String},
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
+  memberSince: { type: Date},
 })
 
 module.exports = model('User', UserSchema)
