@@ -36,6 +36,39 @@ class UserController {
     }
   }
 
+  // ------------------------------ Auth ----------------------------- //
+
+  async auth(req, res) {
+    try {
+        const userData = req.user
+        res.json(userData)
+    } catch (error) {
+      res.json(error.message);
+    }
+  }
+
+    // -------------------------------- Refresh Token -------------------------------- //
+
+    async refresh(req, res) {
+      try {
+        const authorizationHeader = req.headers.authorization;
+        
+        if (!authorizationHeader){
+          //console.log('no headers')
+          throw Error('Unauthorized user');
+        }
+        const refreshToken = authorizationHeader.split(" ")[2];
+        if (!refreshToken){
+          //console.log('no token')
+          throw Error('Unauthorized user');
+        }
+        const userData = await userService.refresh(refreshToken);
+        return res.json(userData); 
+      } catch (error) {
+        res.json(error.message);
+      }
+    }
+
 }
 
 module.exports = new UserController();
