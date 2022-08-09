@@ -1,5 +1,5 @@
 const jwt  = require('jsonwebtoken')
-
+const userModel = require('../models/user-model')
 const tokenModel = require('../models/token-model')
 
 class TokenService {
@@ -21,6 +21,33 @@ class TokenService {
     }
     const token = await tokenModel.create({ user: userId, refreshToken });
     return token
+  }
+
+  async validateAccessToken(token) {
+    try {
+      const user  = await userModel.findOne({token})
+      if(user.token !== token){
+        return null
+      }
+      const userData = jwt.verify(token, process.env.JWT_SECRET_ACCESS)
+      return userData
+    } catch (error) {
+      return null;
+    }
+  }
+
+  validateRefreshToken(token) {
+    try {
+      const userData = jwt.verify(token, process.env.JWT_SECRET_REFRESH)
+      return userData
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async findToken(refreshToken) {
+    const tokenData = await tokenModel.findOne({ refreshToken: refreshToken })
+    return tokenData;
   }
 
 }

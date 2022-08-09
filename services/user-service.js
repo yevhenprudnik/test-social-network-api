@@ -39,13 +39,38 @@ class UserService {
     }
 
     const userDto = new UserDto(user);
-    const tokens = tokenService.generateTokens({...userDto})
+    const tokens = tokenService.generateTokens({...userDto});
 
-    user.token = tokens.accessToken
-    await user.save()
-    await tokenService.saveToken(userDto.id, tokens.refreshToken)
+    user.token = tokens.accessToken;
+    await user.save();
+    await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
-    return { ...tokens, user: userDto }
+    return { ...tokens, user: userDto };
+  }
+
+  // -------------------------------- Refresh Token -------------------------------- //
+
+  async refresh(refreshToken) {
+    if (!refreshToken) {
+        //console.log('no token')
+        throw Error('Unauthorized user');
+    }
+    const userData = tokenService.validateRefreshToken(refreshToken);
+    const tokenFromDb = await tokenService.findToken(refreshToken);
+    if (!tokenFromDb || !userData) {
+      //console.log('wrong token')
+      throw Error('Unauthorized user');
+    }
+    const user = await UserModel.findById(userData.id);
+    const userDto = new UserDto(user);
+    
+    const tokens = tokenService.generateTokens({...userDto});
+    user.token = tokens.accessToken;
+
+    await user.save();
+    await tokenService.saveToken(userDto.id, tokens.refreshToken);
+
+    return { ...tokens, user: userDto };
   }
 
   
