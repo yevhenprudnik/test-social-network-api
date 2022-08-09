@@ -1,4 +1,5 @@
 const UserDto = require('../dto/user-dto');
+const ApiError = require('../exceptions/api-error');
 const UserModel = require('../models/user-model');
 const bcrypt = require('bcrypt');
 const tokenService = require('./token-service');
@@ -11,7 +12,7 @@ class UserService {
   async register(email, password, username) {
     const candidate = await UserModel.findOne({ email }); // Check if user is already registered
     if (candidate) {
-      throw Error('user is already registered');
+      throw ApiError.BadRequest(`User ${email} is already registered`)
     }
     const hashPassword = await bcrypt.hash(password, 3);
     const emailConfirmationLink = uuid.v4();
@@ -34,11 +35,11 @@ class UserService {
   async signIn(email, password) {
     const user = await UserModel.findOne({ email })
     if (!user) {
-        throw Error('user already exists');
+      throw ApiError.BadRequest('User is not found')
     }
     const isPasswordEqual = await bcrypt.compare(password, user.password);
     if (!isPasswordEqual) {
-      throw Error('wrong credentials');
+      throw ApiError.BadRequest('Wrong credentials');
     }
 
     const userDto = new UserDto(user);
@@ -56,13 +57,13 @@ class UserService {
   async refresh(refreshToken) {
     if (!refreshToken) {
         //console.log('no token')
-        throw Error('Unauthorized user');
+        throw ApiError.UnauthorizedError();
     }
     const userData = tokenService.validateRefreshToken(refreshToken);
     const tokenFromDb = await tokenService.findToken(refreshToken);
     if (!tokenFromDb || !userData) {
       //console.log('wrong token')
-      throw Error('Unauthorized user');
+      throw ApiError.UnauthorizedError();
     }
     const user = await UserModel.findById(userData.id);
     const userDto = new UserDto(user);
@@ -81,7 +82,7 @@ class UserService {
   async confirmEmail(emailConfirmationLink) {
     const user = await UserModel.findOne({ emailConfirmationLink })
     if (!user) {
-      throw Error('Bad request');
+      throw ApiError.BadRequest('Invalid activation link');
     }
     user.confirmedEmail = true;
     await user.save();
@@ -91,7 +92,10 @@ class UserService {
 
   async getUserData(userId){
     const user = await UserModel.findById(userId).select('confirmedEmail');
-    return user
+    if (!user) {
+      throw ApiError.BadRequest('User is not found')
+    }
+    return user;
   }
   
 }

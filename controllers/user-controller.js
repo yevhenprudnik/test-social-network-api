@@ -1,72 +1,70 @@
 const userService = require('../services/user-service')
 const { validationResult } = require('express-validator');
+const ApiError = require('../exceptions/api-error');
 
 class UserController {
   
 // -------------------------------- Registration -------------------------------- //
 
-  async register(req, res) {
+  async register(req, res, next) {
     try {
           const errors = validationResult(req)
           if (!errors.isEmpty()) {
-              return res.json({ 
-              message : "Validation failed, username and password length must be at least 5 characters each!", 
-              errors :errors.array() 
-            });
+            return next(ApiError.BadRequest('Validation failed, username and password length must be at least 5 characters each', errors.array()))
           }
           const { email, password, username } = req.body;
           const userData = await userService.register(email, password, username)
 
           return res.json(userData);
     } catch (error) {
-      res.json(error.message);
+      next(error)
     }
   }
 
 // -------------------------------- Signing in -------------------------------- //
 
-  async signIn(req, res) {
+  async signIn(req, res, next) {
     try {
       const { email, password } = req.body;
       const userData = await userService.signIn(email, password);
 
       return res.json(userData);
     } catch (error) {
-      res.json(error.message);
+      next(error)
     }
   }
 
 // ------------------------------ Auth ----------------------------- //
 
-  async auth(req, res) {
+  async auth(req, res, next) {
     try {
         const userData = req.user
         const additionalData = await userService.getUserData(userData.id);
         res.json({userData, additionalData});
     } catch (error) {
-      res.json(error.message);
+      next(error)
     }
   }
 
 // -------------------------------- Refresh Token -------------------------------- //
 
-    async refresh(req, res) {
+    async refresh(req, res, next) {
       try {
         const authorizationHeader = req.headers.authorization;
         
         if (!authorizationHeader){
           //console.log('no headers')
-          throw Error('Unauthorized user');
+          return next(ApiError.UnauthorizedError());
         }
         const refreshToken = authorizationHeader.split(" ")[2];
         if (!refreshToken){
           //console.log('no token')
-          throw Error('Unauthorized user');
+          return next(ApiError.UnauthorizedError());
         }
         const userData = await userService.refresh(refreshToken);
         return res.json(userData); 
       } catch (error) {
-        res.json(error.message);
+        next(error)
       }
     }
 
@@ -76,7 +74,7 @@ class UserController {
     try {
         const activationLink = req.params.link;
         await userService.confirmEmail(activationLink);
-
+        
         //return res.redirect(process.env.CLIENT_URL);
         return res.json('confirmed');
     } catch (error) {
