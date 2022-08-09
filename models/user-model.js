@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose')
+const { Schema, model } = require('mongoose');
+const mongoose = require('mongoose');
 
 const UserSchema = new Schema({
   username: { type: String, unique: true, required: true},
@@ -8,6 +9,8 @@ const UserSchema = new Schema({
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
   memberSince: { type: Date},
+  following: [{ type: mongoose.SchemaTypes.ObjectId, ref: "User"}],
+  followers: [{ type: mongoose.SchemaTypes.ObjectId, ref: "User"}],
 })
 
 module.exports = model('User', UserSchema)
