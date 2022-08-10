@@ -12,11 +12,11 @@ class UserService {
   async register(email, password, username) {
     const candidateByEmail = await UserModel.findOne({ email }); // Check if user is already registered
     if (candidateByEmail) {
-      throw ApiError.BadRequest(`User ${email} is already registered`)
+      throw ApiError.BadRequest(`User ${email} is already registered`);
     }
     const candidateByUsername = await UserModel.findOne({ username });
     if (candidateByUsername) {
-      throw ApiError.BadRequest(`User ${username} is already registered`)
+      throw ApiError.BadRequest(`User ${username} is already registered`);
     }
     const hashPassword = await bcrypt.hash(password, 3);
     const emailConfirmationLink = uuid.v4();
@@ -26,18 +26,18 @@ class UserService {
 
     const userDto = new UserDto(user);
     const tokens = tokenService.generateTokens({...userDto}); // without class
-    user.token = tokens.accessToken
+    user.token = tokens.accessToken;
 
-    await user.save()
-    await tokenService.saveToken(userDto.id, tokens.refreshToken)
+    await user.save();
+    await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
-    return { ...tokens, user: userDto }
+    return { ...tokens, user: userDto };
   }
   
   // -------------------------------- Signing in -------------------------------- //
 
   async signIn(email, password) {
-    const user = await UserModel.findOne({ email })
+    const user = await UserModel.findOne({ email });
     if (!user) {
       throw ApiError.BadRequest('User is not found');
     }
@@ -84,7 +84,7 @@ class UserService {
   // -------------------------------- Email Confirmation -------------------------------- //
 
   async confirmEmail(emailConfirmationLink) {
-    const user = await UserModel.findOne({ emailConfirmationLink })
+    const user = await UserModel.findOne({ emailConfirmationLink });
     if (!user) {
       throw ApiError.BadRequest('Invalid activation link');
     }
@@ -97,7 +97,7 @@ class UserService {
   async getUserData(userId){
     const user = await UserModel.findById(userId).select('confirmedEmail username email');
     if (!user) {
-      throw ApiError.BadRequest('User is not found')
+      throw ApiError.BadRequest('User is not found');
     }
     return user;
   }

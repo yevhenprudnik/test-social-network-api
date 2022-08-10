@@ -1,0 +1,553 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Social Blog API",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3001",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "name": "Authorization",
+      "in": "header",
+      "type": "apiKey",
+      "description": "JWT Authorization header"
+    }
+  },
+  "security": [ { "bearerAuth": [] } ],
+  "basePath": "/api",
+  "paths": {
+    "/register" : {
+      "post": {
+        "summary": "Registration",
+        "description" : "Registration for the app, creating new account",
+        "parameters": [
+          {
+            "name": "User credentials",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "example" : "User 1",
+                  "min length": "5",
+                  "max length": "32",
+                  "required": true
+                },
+                "email": {
+                  "type": "string",
+                  "example" : "user1@gmail.com",
+                  "required": true
+                },
+                "password": {
+                  "type": "string",
+                  "example" : "Secret Password",
+                  "min length": "5",
+                  "max length": "32",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "User object that was created, access and refresh tokens"
+          }
+        }
+      }
+    },
+    "/signIn" : {
+      "post": {
+        "summary": "Login to existing account",
+        "description" : "Login to your account",
+        "parameters": [
+          {
+            "name": "User credentials",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "example" : "user1@gmail.com",
+                  "required": true
+                },
+                "password": {
+                  "type": "string",
+                  "example" : "Secret Password",
+                  "min length": "5",
+                  "max length": "32",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Auth"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "User object, access and refresh tokens"
+          }
+        }
+      }
+    },
+    "/signOut": {
+      "get": {
+        "summary": "Logout from app via access token",
+        "description": "",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "User data"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/refresh": {
+      "get": {
+        "summary": "Refreshing access token via refresh token",
+        "description": "",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "New access and refresh tokens"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "summary": "Users' posts",
+        "description": "The Posts of all users or (if id is specified) the specific user",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "example" : "62f3d91ac6ca216a5esd8197",
+            "description": "An id of the post author",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses": {
+          "200": {
+            "description": "An array of posts"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/following-posts": {
+      "post": {
+        "summary": "Posts of the users you follow",
+        "description": "",
+        "parameters": [
+          {
+            "name": "following",
+            "in": "body",
+            "description": "An array of ids of users you follow",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "followingIdsArray": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example" : 
+                  ["62f3d92ac6ca21665e1d8197", "62f3983c81a2499143ea91bf", "62f3a8qc8qa24a9143ea91bf"]
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses": {
+          "200": {
+            "description": "An array of posts"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/check-auth": {
+      "get": {
+        "summary": "Authorization via access token",
+        "description": "",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "User object with additional data"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/user": {
+      "get": {
+        "summary": "Information about the user",
+        "description": "User object",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "An id of the user",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User data"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/confirm-email/{link}": {
+      "get": {
+        "summary": "Endpoint to confirm your email",
+        "description": "",
+        "parameters": [
+          {
+            "name": "link",
+            "in": "path",
+            "description": "randomly generated during registration string ",
+            "example" : "18868049-1368-45d3-8756-647fc91282b3",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Confirmed"
+          },
+          "default": {
+            "description": "Unexpected error"
+          }
+        }
+      }
+    },
+    "/follow" : {
+      "post": {
+        "summary": "Endpoint to follow a user",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Id of user you want to follow",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "userToFollow": {
+                  "type": "string",
+                  "example" : "62f3d91ac6ca216a5esd8197",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Array of followings"
+          }
+        }
+      }
+    },
+    "/unfollow" : {
+      "post": {
+        "summary": "Endpoint to unfollow a user",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Id of user you want to unfollow",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "userToUnfollow": {
+                  "type": "string",
+                  "example" : "62f3d91ac6ca216a5esd8197",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Array of followings"
+          }
+        }
+      }
+    },
+    "/create-post" : {
+      "post": {
+        "summary": "Create post",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Post content",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "example" : "Some amazing text",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Post object"
+          }
+        }
+      }
+    },
+    "/edit-post" : {
+      "post": {
+        "summary": "Edit a post",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Post Id and new content",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "postId": {
+                  "type": "string",
+                  "example" : "62f3d92ac6ca21665e1d8197",
+                  "required": true
+                },
+                "newText": {
+                  "type": "string",
+                  "example" : "Some amazing text(but better)",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Post object"
+          }
+        }
+      }
+    },
+    "/like-post" : {
+      "post": {
+        "summary": "Like a post",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Post Id",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "postId": {
+                  "type": "string",
+                  "example" : "62f3d92ac6ca21665e1d8197",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Post object"
+          }
+        }
+      }
+    },
+    "/comment-post" : {
+      "post": {
+        "summary": "Comment a post",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Post Id and comment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "postId": {
+                  "type": "string",
+                  "example" : "62f3d92ac6ca21665e1d8197",
+                  "required": true
+                },
+                "comment": {
+                  "type": "string",
+                  "example" : "Some amazing comment",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Post object"
+          }
+        }
+      }
+    },
+    "/delete-post" : {
+      "delete": {
+        "summary": "Delete a post",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Post Id",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "postId": {
+                  "type": "string",
+                  "example" : "62f3d92ac6ca21665e1d8197",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Info"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "User" : {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        },
+        "confirmedEmail": {
+          "type": "boolean"
+        },
+        "memberSince": {
+          "type": "date"
+        },
+        "following": {
+          "type": "array",
+          "items" : {
+            "$ref" : "#/definitions/User"
+          }
+        },
+        "followers": {
+          "type": "array",
+          "items" : {
+            "$ref" : "#/definitions/User"
+          }
+        }
+      }
+    },
+    "Error": {
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

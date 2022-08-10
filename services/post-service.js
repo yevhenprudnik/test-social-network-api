@@ -1,7 +1,7 @@
-const UserModel = require('../models/user-model')
-const ApiError = require('../exceptions/api-error')
-const PostModel = require('../models/post-model')
-const mongoose = require('mongoose')
+const UserModel = require('../models/user-model');
+const ApiError = require('../exceptions/api-error');
+const PostModel = require('../models/post-model');
+const mongoose = require('mongoose');
 
 class PostService {
 
@@ -26,8 +26,8 @@ class PostService {
   async getFollowingPosts(followingIdsArray) {
     const posts = await PostModel.find({ postedBy: {$in: followingIdsArray}})
     .populate('postedBy', 'username')
-    .populate('comments.writtenBy')
-    .populate('likedBy')
+    .populate('comments.writtenBy', 'username')
+    .populate('likedBy', 'username')
     .sort([['date', -1]]);
 
     return posts;
@@ -44,9 +44,9 @@ class PostService {
       writtenBy: userId,
       comment: comment,
     })
-    await post.save()
+    await post.save();
 
-    return post
+    return post;
   }
 
 // ------------------------------ Like a Posts ----------------------------- //
@@ -73,7 +73,7 @@ class PostService {
 
   async editAPost(userId, postId, newText) {
 
-    const post = await PostModel.findById(postId)
+    const post = await PostModel.findById(postId);
     if (!post) {
       throw ApiError.BadRequest('Post is not found');
     }
@@ -90,7 +90,7 @@ class PostService {
 
   async deleteAPost(userId, postId) {
 
-    const post = await PostModel.findById(postId);å
+    const post = await PostModel.findById(postId);
     if (!post) {
       throw ApiError.BadRequest('Post is not found');
     }
