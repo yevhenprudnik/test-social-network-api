@@ -37,10 +37,9 @@ class PostController {
     try {
         const { followingIdsArray } = req.body;
         const posts = await postService.getFollowingPosts(followingIdsArray);
-
-        res.json(posts)
+        res.json(posts);
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
@@ -69,7 +68,7 @@ class PostController {
 
       return res.json(post);
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
@@ -78,12 +77,12 @@ class PostController {
   async editAPost(req, res, next) {
     try {
       const { postId, newText } = req.body;
-      const userId = req.user.id
+      const userId = req.user.id;
       const newPost = await postService.editAPost(userId, postId, newText);
   
       return res.json(newPost)
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
@@ -96,7 +95,7 @@ class PostController {
 
       return res.json(result);
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 }

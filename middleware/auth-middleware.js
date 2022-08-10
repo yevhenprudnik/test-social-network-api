@@ -1,3 +1,4 @@
+const ApiError = require("../exceptions/api-error");
 const tokenService = require("../services/token-service");
 
 module.exports = async (req, res, next) => {
@@ -5,17 +6,17 @@ module.exports = async (req, res, next) => {
       const authorizationHeader = req.headers.authorization;
       if (!authorizationHeader){
         //console.log('no headers')
-        throw Error('Unauthorized user');
+        return next(ApiError.UnauthorizedError());
       }
       const accessToken = authorizationHeader.split(" ")[1];
       if (!accessToken){
         //console.log('no token')
-        throw Error('Unauthorized user');
+        return next(ApiError.UnauthorizedError());
       }
       const userData = await tokenService.validateAccessToken(accessToken);
       if (!userData){
         //console.log('validation failed');
-        throw Error('Unauthorized user');
+        return next(ApiError.UnauthorizedError());
       }
       req.user = userData;
       next();

@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose')
+const { Schema, model } = require('mongoose');
 
 
 const TokenSchema = new Schema({
@@ -6,4 +6,4 @@ const TokenSchema = new Schema({
   refreshToken: { type: String, required: true},
 })
 
-module.exports = model('Token', TokenSchema)
+module.exports = model('Token', TokenSchema);
