@@ -21,6 +21,6 @@ module.exports = async (req, res, next) => {
       req.user = userData;
       next();
   } catch (error) {
-    res.json(error.message);
+    return next(ApiError.UnauthorizedError());
   }
 }

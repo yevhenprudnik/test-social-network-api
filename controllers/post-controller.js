@@ -21,9 +21,7 @@ class PostController {
 
   async getPosts(req, res, next) {
     try {
-        let searchQuery = {};
-        req.query.id ? searchQuery.postedBy = req.query.id : null;
-        const posts = await postService.getPosts(searchQuery);
+        const posts = await postService.getPosts(req.query.id);
 
         res.json(posts);
     } catch (error) {

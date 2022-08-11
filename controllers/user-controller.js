@@ -42,7 +42,7 @@ class UserController {
       const userId = req.user.id;
       const data = await tokenService.removeToken(userId);
 
-      return res.json(data);
+      return res.json({signedOut : data.acknowledged});
     } catch (error) {
       next(error)
     }
@@ -54,7 +54,7 @@ class UserController {
     try {
         const userData = req.user
         const additionalData = await userService.getUserData(userData.id); //additional data for client
-        res.json({userData, additionalData});
+        res.json({ userId: userData.id, additionalData });
     } catch (error) {
       next(error)
     }
@@ -131,6 +131,20 @@ class UserController {
       const user = await userService.unfollow(userId, userToUnfollow);
       
       return res.json(user);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+// ------------------------------ Change Avatar -------------------------------- //
+  
+  async changeAvatar(req, res, next) {
+    try {
+      const { newAvatar } = req.body;
+      const userId = req.user.id;
+      const userAvatar = await userService.changeAvatar(userId, newAvatar);
+      
+      return res.json(userAvatar);
     } catch (error) {
       next(error)
     }

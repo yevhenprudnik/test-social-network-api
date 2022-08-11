@@ -1,6 +1,7 @@
 const jwt  = require('jsonwebtoken');
 const userModel = require('../models/user-model');
 const tokenModel = require('../models/token-model');
+const ApiError = require('../exceptions/api-error');
 
 class TokenService {
   
@@ -50,8 +51,12 @@ class TokenService {
     return tokenData;
   }
 
-  async removeToken(user) {
-    const tokenData = await tokenModel.deleteOne({ user });
+  async removeToken(userId) {
+    const tokenData = await tokenModel.deleteOne({ userId });
+    const user = await userModel.findById(userId);
+    user.token = null;
+    await user.save();
+
     return tokenData;
   }
 
