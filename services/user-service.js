@@ -12,16 +12,16 @@ class UserService {
   async register(email, password, username) {
     const candidateByEmail = await UserModel.findOne({ email }); // Check if user is already registered
     if (candidateByEmail) {
-      throw ApiError.BadRequest(`User ${email} is already registered`);
+      throw ApiError.Conflict(`User ${email} is already registered`);
     }
     const candidateByUsername = await UserModel.findOne({ username });
     if (candidateByUsername) {
-      throw ApiError.BadRequest(`User ${username} is already registered`);
+      throw ApiError.Conflict(`User ${username} is already registered`);
     }
     const hashPassword = await bcrypt.hash(password, 3);
     const emailConfirmationLink = uuid.v4();
 
-    const user = await UserModel.create({ email, username, password: hashPassword, emailConfirmationLink, memberSince: new Date() });
+    const user = await UserModel.create({ email, username, password: hashPassword, emailConfirmationLink, memberSince: new Date()});
     await mailService.sendActionMail(email, `${process.env.API_URL}/api/confirmEmail/${emailConfirmationLink}`);
 
     const userDto = new UserDto(user);
@@ -31,7 +31,7 @@ class UserService {
     await user.save();
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
-    return { ...tokens, user: userDto };
+    return { ...tokens, userId: user._id };
   }
   
   // -------------------------------- Signing in -------------------------------- //
@@ -39,7 +39,7 @@ class UserService {
   async signIn(email, password) {
     const user = await UserModel.findOne({ email });
     if (!user) {
-      throw ApiError.BadRequest('User is not found');
+      throw ApiError.NotFound('User is not found');
     }
     const isPasswordEqual = await bcrypt.compare(password, user.password);
     if (!isPasswordEqual) {
@@ -53,7 +53,7 @@ class UserService {
     await user.save();
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
-    return { ...tokens, user: userDto };
+    return { ...tokens, userId: user._id };
   }
 
 // -------------------------------- Refresh Token -------------------------------- //
@@ -78,7 +78,7 @@ class UserService {
     await user.save();
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
-    return { ...tokens, user: userDto };
+    return { ...tokens, userId : user._id };
   }
 
   // -------------------------------- Email Confirmation -------------------------------- //
@@ -95,9 +95,10 @@ class UserService {
 // ------------------------------ Additional Data ------------------------------ //
 
   async getUserData(userId){
-    const user = await UserModel.findById(userId).select('confirmedEmail username email');
+    const user = await UserModel.findById(userId)
+    .select('confirmedEmail username email avatar following followers memberSince');
     if (!user) {
-      throw ApiError.BadRequest('User is not found');
+      throw ApiError.NotFound('User is not found');
     }
     return user;
   }
@@ -106,8 +107,9 @@ class UserService {
 
   async follow(userId, userToFollowId){
     const user = await UserModel.findById(userId);
-    if (!user) {
-      throw ApiError.BadRequest('User is not found');
+    const userToFollow = await UserModel.findById(userToFollowId);
+    if (!user || !userToFollow) {
+      throw ApiError.NotFound('User is not found');
     }
     if (user.following.includes(userToFollowId)) {
       throw ApiError.BadRequest('You are already following this user');
@@ -115,7 +117,6 @@ class UserService {
     user.following.push(userToFollowId);
     await user.save();
 
-    const userToFollow = await UserModel.findById(userToFollowId);
     userToFollow.followers.push(userId);
 
     await userToFollow.save();
@@ -126,8 +127,9 @@ class UserService {
   
   async unfollow(userId, userToUnfollowId){
     const user = await UserModel.findById(userId);
-    if (!user) {
-      throw ApiError.BadRequest('User is not found');
+    const userToUnfollow = await UserModel.findById(userToUnfollowId);
+    if (!user || !userToUnfollow) {
+      throw ApiError.NotFound('User is not found');
     }
     const following = user.following;
     const userIndex = following.indexOf(userToUnfollowId);
@@ -138,12 +140,24 @@ class UserService {
     user.following.splice(userIndex, 1);
     await user.save();
 
-    const userToUnfollow = await UserModel.findById(userToUnfollowId);
     const userToUnfollowIndex = userToUnfollow.followers.indexOf(userId);
     userToUnfollow.followers.splice(userToUnfollowIndex, 1);
     
     await userToUnfollow.save();
     return user.following;
+  }
+
+// ----------------------------- Change Avatar ----------------------------------- //
+
+  async changeAvatar(userId, newAvatar){
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      throw ApiError.NotFound('User is not found');
+    }
+    user.avatar = newAvatar;
+    await user.save();
+
+    return user.avatar;
   }
   
 }

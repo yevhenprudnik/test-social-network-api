@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Social Blog API",
-    "description": "",
+    "description": "API for a simple social network. You can post your publications and interact with publications of other users (put likes, write comments), follow other users.\nFor most functionality, you should create an account or log into an existing one.\nAfter authentication, you will receive two tokens (access, refresh). An access token is required to access certain routes. The access token is valid for no more than 30 minutes.\nTo renew the access token, use the refresh token (when renewing the access token, the refresh token also changes!). The refresh token is valid for no more than 30 days",
     "version": "1.0.0"
   },
   "host": "localhost:3001",
@@ -23,8 +23,8 @@
   "paths": {
     "/register" : {
       "post": {
-        "summary": "Registration",
-        "description" : "Registration for the app, creating new account",
+        "summary": "Registration for the app, creating new account",
+        "description" : "",
         "parameters": [
           {
             "name": "User credentials",
@@ -61,7 +61,53 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "User object that was created, access and refresh tokens"
+            "description" : "Access and refresh tokens\nUser object's id that was created",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "accessToken": {
+                  "$ref": "#/definitions/Token"
+                },
+                "refreshToken": {
+                  "$ref": "#/definitions/Token"
+                },
+                "userId": {
+                  "$ref": "#/definitions/ObjectId"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Validation failed",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Validation failed, username and password length must be at least 5 characters each"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "User is already registered",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User yevhenprudnik@gmail.com is already registered"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
           }
         }
       }
@@ -99,7 +145,53 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "User object, access and refresh tokens"
+            "description" : "Access and refresh tokens\nUser object's id",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "accessToken": {
+                  "$ref": "#/definitions/Token"
+                },
+                "refreshToken": {
+                  "$ref": "#/definitions/Token"
+                },
+                "userId": {
+                  "$ref": "#/definitions/ObjectId"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Wrong password",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Wrong credentials"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Wrong email",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
           }
         }
       }
@@ -112,11 +204,23 @@
           "Auth"
         ],
         "responses": {
-          "200": {
-            "description": "User data"
+          "200" : {
+            "description" : "Signed out status",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "signOut" : {
+                  "type": "boolean",
+                  "example" : "true"
+                }
+              }
+            }
           },
-          "default": {
-            "description": "Unexpected error"
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref": "#/definitions/UnauthorizedError"
+            }
           }
         }
       }
@@ -128,26 +232,74 @@
         "tags": [
           "Auth"
         ],
-        "responses": {
-          "200": {
-            "description": "New access and refresh tokens"
+        "responses" : {
+          "200" : {
+            "description" : "Access and refresh tokens\nUser object's id",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "accessToken": {
+                  "$ref": "#/definitions/Token"
+                },
+                "refreshToken": {
+                  "$ref": "#/definitions/Token"
+                },
+                "userId": {
+                  "$ref": "#/definitions/ObjectId"
+                }
+              }
+            }
           },
-          "default": {
-            "description": "Unexpected error"
+          "401" : {
+            "description" : "Refresh token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          }
+        }
+      }
+    },
+    "/check-auth": {
+      "get": {
+        "summary": "Authorization via access token",
+        "description": "",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200" : {
+            "description" : "User id from valid token, and additional data",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "userId": {
+                  "$ref": "#/definitions/ObjectId"
+                },
+                "additionalData": {
+                  "$ref": "#/definitions/User"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
           }
         }
       }
     },
     "/posts": {
       "get": {
-        "summary": "Users' posts",
-        "description": "The Posts of all users or (if id is specified) the specific user",
+        "summary": "Post/posts information",
+        "description": "Responses with array of all posts objects if id is not provided in query.\nIf id of user is provided, responses with array of user's posts.\nIf id of a specific post is provided, responses with one post object.",
         "parameters": [
           {
             "name": "id",
             "in": "query",
             "example" : "62f3d91ac6ca216a5esd8197",
-            "description": "An id of the post author",
+            "description": "An id of the post or an id of the user",
             "type": "string"
           }
         ],
@@ -156,10 +308,28 @@
         ],
         "responses": {
           "200": {
-            "description": "An array of posts"
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
           },
-          "default": {
-            "description": "Unexpected error"
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Posts are not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
           }
         }
       }
@@ -194,148 +364,26 @@
         ],
         "responses": {
           "200": {
-            "description": "An array of posts"
-          },
-          "default": {
-            "description": "Unexpected error"
-          }
-        }
-      }
-    },
-    "/check-auth": {
-      "get": {
-        "summary": "Authorization via access token",
-        "description": "",
-        "tags": [
-          "Auth"
-        ],
-        "responses": {
-          "200": {
-            "description": "User object with additional data"
-          },
-          "default": {
-            "description": "Unexpected error"
-          }
-        }
-      }
-    },
-    "/user": {
-      "get": {
-        "summary": "Information about the user",
-        "description": "User object",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "query",
-            "example" : "62f3d92ac6ca21665e1d8197",
-            "description": "An id of the user",
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Users"
-        ],
-        "responses": {
-          "200": {
-            "description": "User data"
-          },
-          "default": {
-            "description": "Unexpected error"
-          }
-        }
-      }
-    },
-    "/confirm-email/{link}": {
-      "get": {
-        "summary": "Endpoint to confirm your email",
-        "description": "",
-        "parameters": [
-          {
-            "name": "link",
-            "in": "path",
-            "description": "randomly generated during registration string ",
-            "example" : "18868049-1368-45d3-8756-647fc91282b3",
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Users"
-        ],
-        "responses": {
-          "200": {
-            "description": "Confirmed"
-          },
-          "default": {
-            "description": "Unexpected error"
-          }
-        }
-      }
-    },
-    "/follow" : {
-      "post": {
-        "summary": "Endpoint to follow a user",
-        "description" : "",
-        "parameters": [
-          {
-            "name": "Id of user you want to follow",
-            "in": "body",
-            "required": true,
+            "description": "An array of posts",
             "schema": {
-              "type": "object",
-              "properties": {
-                "userToFollow": {
-                  "type": "string",
-                  "example" : "62f3d91ac6ca216a5esd8197",
-                  "required": true
-                }
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
               }
             }
-          }
-        ],
-        "tags": [
-          "Users"
-        ],
-        "responses" : {
-          "200" : {
-            "description" : "Array of followings"
-          }
-        }
-      }
-    },
-    "/unfollow" : {
-      "post": {
-        "summary": "Endpoint to unfollow a user",
-        "description" : "",
-        "parameters": [
-          {
-            "name": "Id of user you want to unfollow",
-            "in": "body",
-            "required": true,
+          },
+          "401" : {
+            "description" : "Access token is not valid",
             "schema": {
-              "type": "object",
-              "properties": {
-                "userToUnfollow": {
-                  "type": "string",
-                  "example" : "62f3d91ac6ca216a5esd8197",
-                  "required": true
-                }
-              }
+              "$ref" : "#/definitions/UnauthorizedError"
             }
-          }
-        ],
-        "tags": [
-          "Users"
-        ],
-        "responses" : {
-          "200" : {
-            "description" : "Array of followings"
           }
         }
       }
     },
     "/create-post" : {
       "post": {
-        "summary": "Create post",
+        "summary": "Create a post",
         "description" : "",
         "parameters": [
           {
@@ -359,7 +407,32 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Post object"
+            "description" : "Post object",
+            "schema": {
+              "$ref" : "#/definitions/Post"
+            }
+          },
+          "400" : {
+            "description" : "Text field is required",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Credentials are required"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
           }
         }
       }
@@ -395,7 +468,32 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Post object"
+            "description" : "Edited post object",
+            "schema": {
+              "$ref" : "#/definitions/Post"
+            }
+          },
+          "400" : {
+            "description" : "Post can be modified only by it's author",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post can be modified only by it's author"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
           }
         }
       }
@@ -426,7 +524,32 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Post object"
+            "description" : "Post object",
+            "schema": {
+              "$ref" : "#/definitions/Post"
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "Post is not found",
+            "schema" : {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
           }
         }
       }
@@ -462,7 +585,32 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Post object"
+            "description" : "Post object",
+            "schema" : {
+              "$ref" : "#/definitions/Post"
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "Post is not found",
+            "schema" : {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
           }
         }
       }
@@ -493,7 +641,326 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Info"
+            "description" : "Deleted boolean",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "deleted": {
+                  "type" : "boolean",
+                  "example" : "true"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "Post is not found",
+            "schema" : {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user": {
+      "get": {
+        "summary": "Information about the user",
+        "description": "User object",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "An id of the user",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "User data",
+            "schema" : {
+              "$ref" : "#/definitions/User"
+            }
+          },
+          "404" : {
+            "description" : "User is not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/confirm-email/{link}": {
+      "get": {
+        "summary": "Endpoint to confirm your email",
+        "description": "",
+        "parameters": [
+          {
+            "name": "link",
+            "in": "path",
+            "description": "randomly generated during registration string ",
+            "example" : "18868049-1368-45d3-8756-647fc91282b3",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Single string 'confirmed'",
+            "schema" : {
+              "type": "string",
+              "example" : "confirmed"
+            }
+          },
+          "400": {
+            "description": "Invalid activation link",
+            "schema" : {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Invalid activation link"
+                },
+                "errors": {
+                  "type": "array",
+                  "example": []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/follow" : {
+      "post": {
+        "summary": "Endpoint to follow a user",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Id of user you want to follow",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "userToFollow": {
+                  "type": "string",
+                  "example" : "62f3d91ac6ca216a5esd8197",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "An array of users' ids that user follows",
+            "schema" : {
+              "type" : "array",
+              "example": ["62f3d91ac6ca216a5esd8197", "62f243e582dd47ba5d379f02", "62f3983c81a2499143ea91bs"]
+            }
+          },
+          "400" : {
+            "description" : "User is trying to follow a user that is already in his following",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "type" : "string",
+                  "example" : "You are already following this user"
+                },
+                "errors" : {
+                  "type" : "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "User is not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/unfollow" : {
+      "post": {
+        "summary": "Endpoint to unfollow a user",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Id of user you want to unfollow",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "userToUnfollow": {
+                  "type": "string",
+                  "example" : "62f3d91ac6ca216a5esd8197",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "An array of users' ids that user follows",
+            "schema" : {
+              "type" : "array",
+              "example": ["62f3d91ac6ca216a5esd8197", "62f243e582dd47ba5d379f02", "62f3983c81a2499143ea91bs"]
+            }
+          },
+          "400" : {
+            "description" : "User is trying to unfollow a user he is not following",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "type" : "string",
+                  "example" : "You are not following this user"
+                },
+                "errors" : {
+                  "type" : "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "User is not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/change-avatar" : {
+      "post": {
+        "summary": "Endpoint to change user's profile image'",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "new avatar",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "newAvatar": {
+                  "type": "string",
+                  "example" : "http://tachyons.io/img/avatar_1.jpg",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "New avatar",
+            "schema" : {
+              "type" : "string",
+              "example" : "http://tachyons.io/img/avatar_1.jpg"
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "User is not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
           }
         }
       }
@@ -503,49 +970,123 @@
     "User" : {
       "type": "object",
       "properties": {
+        "_id" : {
+          "$ref": "#/definitions/ObjectId"
+        },
         "username": {
-          "type": "string"
+          "type": "string",
+          "example": "Yevhen"
         },
         "email": {
-          "type": "string"
+          "type": "string",
+          "example": "yevhen@gmail.com"
         },
-        "password": {
-          "type": "string"
-        },
-        "token": {
-          "type": "string"
-        },
-        "confirmedEmail": {
-          "type": "boolean"
+        "avatar": {
+          "type": "string",
+          "example": "http://tachyons.io/img/avatar_1.jpg"
         },
         "memberSince": {
-          "type": "date"
+          "type": "date",
+          "example" : "2022-08-11T06:19:53.226+00:00"
+        },
+        "confirmedEmail": {
+          "type": "boolean",
+          "example": false
         },
         "following": {
           "type": "array",
           "items" : {
-            "$ref" : "#/definitions/User"
+            "$ref" : "#/definitions/ObjectId"
           }
         },
         "followers": {
           "type": "array",
           "items" : {
-            "$ref" : "#/definitions/User"
+            "$ref" : "#/definitions/ObjectId"
           }
         }
       }
     },
-    "Error": {
+    "Post":{
+      "type" : "object",
       "properties": {
-        "code": {
-          "type": "integer",
-          "format": "int32"
+        "_id": {
+          "$ref": "#/definitions/ObjectId"
         },
-        "message": {
-          "type": "string"
+        "postedBy": {
+          "type" : "object",
+          "properties" : {
+            "_id": {
+              "$ref": "#/definitions/ObjectId"
+            },
+            "username": {
+              "type": "string",
+              "example" : "Yevhen"
+            }
+          }
         },
-        "fields": {
-          "type": "string"
+        "text": {
+          "type": "string",
+          "example" : "Post content example"
+        },
+        "likedBy": {
+          "type": "array",
+          "items" : {
+            "$ref": "#/definitions/ObjectId"
+          }
+        },
+        "date" : {
+          "type": "date",
+          "example" : "2022-08-11T06:19:53.226+00:00"
+        },
+        "comments": {
+          "type": "array",
+          "items" : {
+            "type" : "object",
+            "properties" : {
+              "writtenBy": {
+                "type" : "object",
+                "properties" : {
+                  "_id" : {
+                    "$ref": "#/definitions/ObjectId"
+                  }, 
+                  "username" : {
+                    "type" : "string",
+                    "example" : "Yevhen"
+                  }
+                }
+              },
+              "comment": {
+                "type": "string",
+                "example" : "Some amazing comment"
+              }, 
+              "_id" : {
+                "$ref": "#/definitions/ObjectId"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ObjectId" : {
+      "type": "string",
+      "example" : "62f3d39b345f9a03a827a562"
+    },
+    "Token" : {
+      "type": "string",
+      "example" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IllldmhlbiIsImVtYWlsIjoieWV2aGVucHJ1ZG5pa0BnbWFpbC5jb20iLCJpZCI6IjYyZjI0M2U1ODJkZDQ3YmE1ZDM3OWYwMSIsImlhdCI6MTY2MDIxMTk2MCwiZXhwIjoxNjYwMjEzNzYwfQ.XVGBvCXBgrAcOG_HQBxeK9YaBvL22xfHoxBsNFM0wpI"
+    },
+    "UnauthorizedError": {
+      "description" : "Access token is not valid",
+      "type" : "object",
+      "properties" : {
+        "message" : {
+          "type" : "string",
+          "example": "Unauthorized user"
+        },
+        "errors" : {
+          "type" : "array",
+          "example" : []
         }
       }
     }

@@ -17,14 +17,15 @@ router.post('/register',
   body('username').isLength({min: 5, max: 32}),
   userController.register
 );
-router.post('/signIn', userController.signIn);
+router.post('/signIn',  userController.signIn);
 router.get('/signOut', authMiddleware, userController.signOut);
 router.get('/check-auth', authMiddleware, userController.auth);
 router.get('/refresh', userController.refresh);
+router.get('/confirm-email/:link', userController.confirmEmail);
+router.get('/user', userController.getUser);
 router.post('/follow',authMiddleware, userController.follow);
 router.post('/unfollow', authMiddleware, userController.unfollow);
-router.get('/confirm-email/:link', userController.confirmEmail);
-router.get('/user', authMiddleware, userController.getUser);
+router.post('/change-avatar',authMiddleware, userController.changeAvatar);
 // ------------------------------ Posts ------------------------------ //
 router.post('/create-post', authMiddleware, postController.createAPost);
 router.get('/posts', postController.getPosts);

@@ -11,6 +11,7 @@ const UserSchema = new Schema({
   memberSince: { type: Date},
   following: [{ type: mongoose.SchemaTypes.ObjectId, ref: "User"}],
   followers: [{ type: mongoose.SchemaTypes.ObjectId, ref: "User"}],
+  avatar: {type: String, default: 'http://tachyons.io/img/avatar_1.jpg'}
 })
 
 module.exports = model('User', UserSchema);
