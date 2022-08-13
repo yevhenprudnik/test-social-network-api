@@ -6,7 +6,7 @@ module.exports = function(err, req, res, next) {
     return res.status(err.status).json({message: err.message, errors: err.errors });
   } else if (err.kind === "ObjectId"){
     return res.status(400).json({ message: "Invalid Id" });
-  } else if (err._message.split(" ")[1] === "validation"){ // error message ex: "Post validation failed"
+  } else if (err._message && err._message.split(" ")[1] === "validation"){ // error message ex: "Post validation failed"
     return res.status(400).json({ message: err._message });
   }
   return res.status(500).json({ message : 'Server error' });

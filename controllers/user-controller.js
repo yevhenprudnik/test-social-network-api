@@ -14,7 +14,7 @@ class UserController {
             return next(ApiError.BadRequest('Validation failed, username and password length must be at least 5 characters each', errors.array()))
           }
           const { email, password, username, fullName } = req.body;
-          const userData = await userService.register(email, password, username, fullName)
+          const userData = await userService.register(email, password, username, fullName);
       
           res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
           return res.json({accessToken: userData.accessToken, userId : userData.userId}); 

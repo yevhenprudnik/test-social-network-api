@@ -16,13 +16,15 @@ class MailService {
     await this.transporter.sendMail({
       from: process.env.SMTP_PORT,
       to,
-      subject: `Email confirmation on ${process.env.CLIENT_URL}`,
+      subject: `Email confirmation`,
       text: '',
       html:
         `
           <div>
             <h1>To confirm your email click the button below</h1>
             <button href="${link}">CONFIRM</button>
+            <h1>Or follow the link below</h1>
+            <a href="${link}">${link}</a>
           </div>
         `
     })
