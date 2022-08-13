@@ -1,12 +1,11 @@
 const jwt  = require('jsonwebtoken');
 const userModel = require('../models/user-model');
 const tokenModel = require('../models/token-model');
-const ApiError = require('../exceptions/api-error');
 
 class TokenService {
   
   generateTokens(payload) {
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_ACCESS, { expiresIn: '30m' });
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_ACCESS, { expiresIn: '10h' }); // CHANGE TO 30m !!!!!
     const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { expiresIn: '30d' });
     return { 
       accessToken,

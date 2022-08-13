@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Social Blog API",
-    "description": "API for a simple social network. You can post your publications and interact with publications of other users (put likes, write comments), follow other users.\nFor most functionality, you should create an account or log into an existing one.\nAfter authentication, you will receive two tokens (access, refresh). An access token is required to access certain routes. The access token is valid for no more than 30 minutes.\nTo renew the access token, use the refresh token (when renewing the access token, the refresh token also changes!). The refresh token is valid for no more than 30 days",
+    "description": "API for a simple social network. You can post some publications and interact with publications of other users (put likes, write comments) and follow other users.\nFor most functionality(endpoints), you should create an account or log into an existing one.\nAfter authentication, you will receive two tokens (access, refresh). An access token is required to access certain routes. The access token is valid for no more than 30 minutes.\nTo renew the access token, use the refresh token (when renewing the access token, the refresh token also changes!). The refresh token is valid for no more than 30 days",
     "version": "1.0.0"
   },
   "host": "localhost:3001",
@@ -18,12 +18,11 @@
       "description": "JWT Authorization header"
     }
   },
-  "security": [ { "bearerAuth": [] } ],
   "basePath": "/api",
   "paths": {
     "/register" : {
       "post": {
-        "summary": "Registration for the app, creating new account",
+        "summary": "Endpoint to register for the app, creating new account",
         "description" : "",
         "parameters": [
           {
@@ -114,7 +113,7 @@
     },
     "/signIn" : {
       "post": {
-        "summary": "Login to existing account",
+        "summary": "Endpoint to login to existing account",
         "description" : "Login to your account",
         "parameters": [
           {
@@ -198,7 +197,8 @@
     },
     "/signOut": {
       "get": {
-        "summary": "Logout from app via access token",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to logout from app via access token",
         "description": "",
         "tags": [
           "Auth"
@@ -227,7 +227,7 @@
     },
     "/refresh": {
       "get": {
-        "summary": "Refreshing access token via refresh token",
+        "summary": "Endpoint to renew an access token via refresh token",
         "description": "",
         "tags": [
           "Auth"
@@ -261,7 +261,8 @@
     },
     "/check-auth": {
       "get": {
-        "summary": "Authorization via access token",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to get authorized via access token and ger additional data",
         "description": "",
         "tags": [
           "Auth"
@@ -292,7 +293,7 @@
     },
     "/posts": {
       "get": {
-        "summary": "Post/posts information",
+        "summary": "Endpoint to get posts/post list",
         "description": "Responses with array of all posts objects if id is not provided in query.\nIf id of user is provided, responses with array of user's posts.\nIf id of a specific post is provided, responses with one post object.",
         "parameters": [
           {
@@ -315,6 +316,12 @@
               }
             }
           },
+          "400": {
+            "description" : "Invalid ObjectId",
+            "schema" : { 
+              "$ref" : "#/definitions/InvalidIdError"
+            }
+          },
           "404": {
             "description": "Not found",
             "schema": {
@@ -322,7 +329,7 @@
               "properties" : {
                 "message": {
                   "type": "string",
-                  "example" : "Posts are not found"
+                  "example" : "Post is not found"
                 },
                 "errors": {
                   "type": "array",
@@ -336,7 +343,8 @@
     },
     "/following-posts": {
       "post": {
-        "summary": "Posts of the users you follow",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to get posts/post list of the users you follow",
         "description": "",
         "parameters": [
           {
@@ -364,7 +372,7 @@
         ],
         "responses": {
           "200": {
-            "description": "An array of posts",
+            "description": "An array of posts of users you provided in array",
             "schema": {
               "type": "array",
               "items": {
@@ -383,7 +391,8 @@
     },
     "/create-post" : {
       "post": {
-        "summary": "Create a post",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to create a post",
         "description" : "",
         "parameters": [
           {
@@ -419,7 +428,7 @@
               "properties" : {
                 "message": {
                   "type": "string",
-                  "example" : "Credentials are required"
+                  "example" : "Post validation failed"
                 },
                 "errors": {
                   "type": "array",
@@ -439,7 +448,8 @@
     },
     "/edit-post" : {
       "post": {
-        "summary": "Edit a post",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to edit your post",
         "description" : "",
         "parameters": [
           {
@@ -500,7 +510,8 @@
     },
     "/like-post" : {
       "post": {
-        "summary": "Like a post",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to like someone's post",
         "description" : "",
         "parameters": [
           {
@@ -556,7 +567,8 @@
     },
     "/comment-post" : {
       "post": {
-        "summary": "Comment a post",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to comment someone's post",
         "description" : "",
         "parameters": [
           {
@@ -617,7 +629,8 @@
     },
     "/delete-post" : {
       "delete": {
-        "summary": "Delete a post",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to delete your post",
         "description" : "",
         "parameters": [
           {
@@ -679,7 +692,7 @@
     },
     "/user": {
       "get": {
-        "summary": "Information about the user",
+        "summary": "Endpoint to get information about the user",
         "description": "User object",
         "parameters": [
           {
@@ -764,7 +777,8 @@
     },
     "/follow" : {
       "post": {
-        "summary": "Endpoint to follow a user",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to follow the user",
         "description" : "",
         "parameters": [
           {
@@ -837,7 +851,8 @@
     },
     "/unfollow" : {
       "post": {
-        "summary": "Endpoint to unfollow a user",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to unfollow the user",
         "description" : "",
         "parameters": [
           {
@@ -910,7 +925,8 @@
     },
     "/change-avatar" : {
       "post": {
-        "summary": "Endpoint to change user's profile image'",
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to change your profile image",
         "description" : "",
         "parameters": [
           {
@@ -968,6 +984,7 @@
   },
   "definitions": {
     "User" : {
+      "description" : "User object",
       "type": "object",
       "properties": {
         "_id" : {
@@ -1008,6 +1025,7 @@
       }
     },
     "Post":{
+      "description": "Post object",
       "type" : "object",
       "properties": {
         "_id": {
@@ -1069,10 +1087,12 @@
       }
     },
     "ObjectId" : {
+      "description": "Object id from database",
       "type": "string",
       "example" : "62f3d39b345f9a03a827a562"
     },
     "Token" : {
+      "description": "String that represents hashed information about the specific user",
       "type": "string",
       "example" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IllldmhlbiIsImVtYWlsIjoieWV2aGVucHJ1ZG5pa0BnbWFpbC5jb20iLCJpZCI6IjYyZjI0M2U1ODJkZDQ3YmE1ZDM3OWYwMSIsImlhdCI6MTY2MDIxMTk2MCwiZXhwIjoxNjYwMjEzNzYwfQ.XVGBvCXBgrAcOG_HQBxeK9YaBvL22xfHoxBsNFM0wpI"
     },
@@ -1083,6 +1103,20 @@
         "message" : {
           "type" : "string",
           "example": "Unauthorized user"
+        },
+        "errors" : {
+          "type" : "array",
+          "example" : []
+        }
+      }
+    },
+    "InvalidIdError" : {
+      "description" : "Object is not a valid",
+      "type" : "object",
+      "properties" : {
+        "message" : {
+          "type" : "string",
+          "example": "Invalid Id"
         },
         "errors" : {
           "type" : "array",

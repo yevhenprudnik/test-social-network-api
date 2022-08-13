@@ -9,6 +9,7 @@ const authMiddleware = require('../middleware/auth-middleware');
 
 router.use('/api-docs', swaggerUi.serve);
 router.get('/api-docs', swaggerUi.setup(swaggerDocument));
+
 router.get('/', (req, res) => {res.json("router's working")});
 // ------------------------------ Users ------------------------------ //
 router.post('/register',
@@ -22,14 +23,15 @@ router.get('/signOut', authMiddleware, userController.signOut);
 router.get('/check-auth', authMiddleware, userController.auth);
 router.get('/refresh', userController.refresh);
 router.get('/confirm-email/:link', userController.confirmEmail);
-router.get('/user', userController.getUser);
-router.post('/follow',authMiddleware, userController.follow);
-router.post('/unfollow', authMiddleware, userController.unfollow);
+router.get('/user', authMiddleware, userController.getUser);
+router.post('/send-request',authMiddleware, userController.sendRequest);
+router.post('/accept-request', authMiddleware, userController.acceptRequest);
+router.post('/reject-request', authMiddleware, userController.rejectRequest);
+router.delete('/delete-friend', authMiddleware, userController.deleteFriend);
 router.post('/change-avatar',authMiddleware, userController.changeAvatar);
 // ------------------------------ Posts ------------------------------ //
 router.post('/create-post', authMiddleware, postController.createAPost);
-router.get('/posts', postController.getPosts);
-router.post('/following-posts', authMiddleware, postController.getFollowingPosts);
+router.get('/posts', authMiddleware, postController.getPosts);
 router.post('/comment-post', authMiddleware, postController.commentAPost);
 router.post('/like-post', authMiddleware, postController.likeAPost);
 router.post('/edit-post', authMiddleware, postController.editAPost);

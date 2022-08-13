@@ -1,53 +1,46 @@
 const UserModel = require('../models/user-model');
 const ApiError = require('../exceptions/api-error');
 const PostModel = require('../models/post-model');
-const mongoose = require('mongoose');
+//const mongoose = require('mongoose');
 class PostService {
 
 // ------------------------------ Create a Post ------------------------------ //
 
-  async createAPost(postedBy, text) {
-    const post = await (await PostModel.create({postedBy, text, date: new Date() }))
-    .populate("postedBy", "username");
+  async createAPost(postedBy, header, text) {
+    const post = await PostModel.create({ postedBy, header, text, date: new Date() });
+    
     return post;
   }
 
 // ------------------------------ Get Posts ------------------------------ //
 
-  async getPosts(searchId){
-    if (!searchId) {
-      const posts = await PostModel.find()
-      .populate('postedBy', 'username')
-      .populate('comments.writtenBy', 'username')
-      .populate('likedBy', 'username')
+  async getPosts(postId, userId, postedBy){
+    const user = await UserModel.findById(userId);
+    // Get the posts of a specific user
+    if (postedBy) {
+      if (!user.friends.includes(postedBy) && user.username !== postedBy) {
+        throw ApiError.Forbidden("You can't see posts of users you are not friends with");
+      }
+      const posts = await PostModel.find({ postedBy })
       .sort([['date', -1]]);
+
       return posts;
     }
-    let posts = await PostModel.find({ postedBy : searchId})
-    .populate('postedBy', 'username')
-    .populate('comments.writtenBy', 'username')
-    .populate('likedBy', 'username')
-    .sort([['date', -1]]);
-    if (!posts.length) {
-      posts = await PostModel.findById(searchId)
-      .populate('postedBy', 'username')
-      .populate('comments.writtenBy', 'username')
-      .populate('likedBy', 'username')
-      .sort([['date', -1]]);
-    }
-    if (!posts.length) {
-      throw ApiError.NotFound('Posts are not found');
-    }
-    return posts;
-  }
+    // Get the specific post
+    if (postId) {
+      const post = await PostModel.findById(postId);
+      const postAuthor = await UserModel.findOne({ username : post.postedBy });
+      if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+        throw ApiError.Forbidden("You can't see posts of users you are not friends with");
+      }
+      if (!post) {
+        throw ApiError.NotFound('Post is not found');
+      }
 
-// ------------------------------ Get Following Posts ------------------------------ //
-
-  async getFollowingPosts(followingIdsArray) {
-    const posts = await PostModel.find({ postedBy: {$in: followingIdsArray}})
-    .populate('postedBy', 'username')
-    .populate('comments.writtenBy', 'username')
-    .populate('likedBy', 'username')
+      return post;
+    }
+    // Get all posts of user's friends
+    const posts = await PostModel.find({ postedBy: {$in: user.friends}})
     .sort([['date', -1]]);
 
     return posts;
@@ -56,15 +49,20 @@ class PostService {
 // ------------------------------ Comment a Post ----------------------------- //
 
   async commentAPost(userId, postId, comment) {
+    const user = await UserModel.findById(userId);
     const post = await PostModel.findById(postId);
+    const postAuthor = await UserModel.findOne({ username : post.postedBy });
+    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+      throw ApiError.Forbidden("You can't see posts of users you are not friends with");
+    }
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
     post.comments.push({
-      writtenBy: userId,
+      writtenBy: user.username,
       comment: comment,
     })
-    await(await post.save()).populate("postedBy", "username");
+    await post.save();
 
     return post;
   }
@@ -73,46 +71,51 @@ class PostService {
 
   async likeAPost(userId, postId) {
     const post = await PostModel.findById(postId);
+    const user = await UserModel.findById(userId);
+    const postAuthor = await UserModel.findOne({ username : post.postedBy });
+    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+      throw ApiError.Forbidden("You can't see posts of users you are not friends with");
+    }
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
     const likes = post.likedBy;
     //console.log(`likes: ${likes}`, `User id: ${userId}`);
-    const index = likes.indexOf(userId);
+    const index = likes.indexOf(user.username);
     if (index > -1) {
       post.likedBy.splice(index, 1);
     } else {
-      post.likedBy.push(userId);
+      post.likedBy.push(user.username);
     }
-    await(await post.save()).populate("postedBy", "username");
-    return populatedPost;
+    await post.save();
+
+    return post;
   }
 
 // ------------------------------ Edit a Post ----------------------------- //
 
-  async editAPost(userId, postId, newText) {
-
+  async editAPost(postedBy, postId, newText) {
     const post = await PostModel.findById(postId);
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    if (userId !== post.postedBy.toHexString()) {
+    if (postedBy !== post.postedBy) {
       throw ApiError.BadRequest("Post can be modified only by it's author");
     } 
     post.text = newText;
-    await(await post.save()).populate("postedBy", "username");
+    await post.save();
+
     return post;
   }
 
 // ------------------------------ Delete a Post ----------------------------- //
 
-  async deleteAPost(userId, postId) {
-
+  async deleteAPost(postedBy, postId) {
     const post = await PostModel.findById(postId);
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    if (userId !== post.postedBy.toHexString()) {
+    if (postedBy !== post.postedBy) {
       throw ApiError.BadRequest("Post can be deleted only by it's author");
     } 
     await post.delete();
