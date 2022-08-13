@@ -1,13 +1,14 @@
 const { Schema, model } = require('mongoose');
-const mongoose = require('mongoose');
+//const mongoose = require('mongoose');
 
 const PostSchema = new Schema({
-  postedBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User", required: true},
-  text: { type: String, required: true},
+  postedBy: { type: String, required: true },
+  header: { type: String, required: true },
+  text: { type: String, required: true },
   date: { type: Date},
-  likedBy: [{ type: mongoose.SchemaTypes.ObjectId, ref: "User"}],
+  likedBy: [ String ],
   comments: [{
-    writtenBy: { type: mongoose.SchemaTypes.ObjectId, ref: "User"},
+    writtenBy: { type: String },
     comment: { type: String }
   }]
 })

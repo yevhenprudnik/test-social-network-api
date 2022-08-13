@@ -9,18 +9,19 @@ const errorMiddleware = require('./middleware/error-middleware');
 const app = express();
 
 app.use( cors() );
-app.use( express.urlencoded({ extended : true }) );
+app.use( express.urlencoded({ extended : true }));
 app.use( express.json() );
 app.use( '/api', router );
 app.use( errorMiddleware );
 
-app.get('/', (req, res) => {
+app.post('/', (req, res) => {
+
   res.json("It's working!");
 })
 
 const start = (async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_CONNECTION_STRING, {
+    mongoose.connect(process.env.MONGODB_CONNECTION_STRING, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     })

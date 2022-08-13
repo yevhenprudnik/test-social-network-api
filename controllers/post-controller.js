@@ -1,15 +1,13 @@
-const ApiError = require('../exceptions/api-error');
 const postService = require('../services/post-service');
-
 class PostController {
 
 // -------------------------------- Create a Post ----------------------------------- //
 
   async createAPost(req, res, next) {
     try {
-      const { text } = req.body;
-      const postedBy = req.user.id;
-      const postData = await postService.createAPost(postedBy, text);
+      const { text, header } = req.body;
+      const postedBy = req.user.username;
+      const postData = await postService.createAPost(postedBy, header, text);
 
       return res.json(postData);
     } catch (error) {
@@ -21,20 +19,11 @@ class PostController {
 
   async getPosts(req, res, next) {
     try {
-        const posts = await postService.getPosts(req.query.id);
+        const userId = req.user.id;
+        const postId = req.query.id;
+        const postedBy = req.query.postedBy;
+        const posts = await postService.getPosts(postId, userId, postedBy);
 
-        res.json(posts);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-// ------------------- Get posts of specific users(users you follow) --------------------- //
-
-  async getFollowingPosts(req, res, next) {
-    try {
-        const { followingIdsArray } = req.body;
-        const posts = await postService.getFollowingPosts(followingIdsArray);
         res.json(posts);
     } catch (error) {
       next(error);
@@ -75,8 +64,8 @@ class PostController {
   async editAPost(req, res, next) {
     try {
       const { postId, newText } = req.body;
-      const userId = req.user.id;
-      const newPost = await postService.editAPost(userId, postId, newText);
+      const postedBy = req.user.username;
+      const newPost = await postService.editAPost(postedBy, postId, newText);
   
       return res.json(newPost)
     } catch (error) {
@@ -88,8 +77,8 @@ class PostController {
   async deleteAPost(req, res, next) {
     try {
       const { postId } = req.body;
-      const userId = req.user.id;
-      const result = await postService.deleteAPost(userId, postId);
+      const postedBy = req.user.username;
+      const result = await postService.deleteAPost(postedBy, postId);
 
       return res.json(result);
     } catch (error) {

@@ -13,8 +13,8 @@ class UserController {
           if (!errors.isEmpty()) {
             return next(ApiError.BadRequest('Validation failed, username and password length must be at least 5 characters each', errors.array()))
           }
-          const { email, password, username } = req.body;
-          const userData = await userService.register(email, password, username)
+          const { email, password, username, fullName } = req.body;
+          const userData = await userService.register(email, password, username, fullName)
 
           return res.json(userData);
     } catch (error) {
@@ -53,7 +53,7 @@ class UserController {
   async auth(req, res, next) {
     try {
         const userData = req.user
-        const additionalData = await userService.getUserData(userData.id); //additional data for client
+        const additionalData = await userService.getFullUserData(userData.id); //additional data for client
         res.json({ userId: userData.id, additionalData });
     } catch (error) {
       next(error)
@@ -86,9 +86,11 @@ class UserController {
 
   async getUser(req, res, next) {
     try {
-        const user = await userService.getUserData(req.query.id)
+        const userId = req.user.id;
+        const userToFind = req.query.user;
+        const user = await userService.getUserData(userId, userToFind);
+
         res.json(user)
-        
     } catch (error) {
       next(error)
     }
@@ -108,29 +110,57 @@ class UserController {
     }
   }
 
-// ------------------------------ Follow -------------------------------- //
+// ------------------------------ Send friend request -------------------------------- //
 
-  async follow(req, res, next) {
+  async sendRequest(req, res, next) {
     try {
-      const { userToFollow } = req.body;
+      const { requestFriend } = req.body;
       const userId = req.user.id;
-      const user = await userService.follow(userId, userToFollow);
+      const outcomingRequests = await userService.sendRequest(userId, requestFriend);
       
-      return res.json(user);
+      return res.json(outcomingRequests);
     } catch (error) {
       next(error)
     }
   }
 
-// ------------------------------ Unfollow -------------------------------- //
+// ------------------------------ Accept friend request --------------------------------- //
 
-  async unfollow(req, res, next) {
+  async acceptRequest(req, res, next) {
     try {
-      const { userToUnfollow } = req.body;
+      const { acceptFriend } = req.body;
       const userId = req.user.id;
-      const user = await userService.unfollow(userId, userToUnfollow);
+      const userFriends = await userService.acceptRequest(userId, acceptFriend);
       
-      return res.json(user);
+      return res.json(userFriends);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+// ------------------------------ Reject friend request --------------------------------- //
+
+  async rejectRequest(req, res, next) {
+    try {
+      const { rejectFriend } = req.body;
+      const userId = req.user.id;
+      const userFriends = await userService.rejectRequest(userId, rejectFriend);
+      
+      return res.json(userFriends);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+// ------------------------------ Delete friend --------------------------------- //
+
+  async deleteFriend(req, res, next) {
+    try {
+      const { deleteFriend } = req.body;
+      const userId = req.user.id;
+      const userFriends = await userService.deleteFriend(userId, deleteFriend);
+      
+      return res.json(userFriends);
     } catch (error) {
       next(error)
     }
