@@ -15,8 +15,9 @@ class UserController {
           }
           const { email, password, username, fullName } = req.body;
           const userData = await userService.register(email, password, username, fullName)
-
-          return res.json(userData);
+      
+          res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+          return res.json({accessToken: userData.accessToken, userId : userData.userId}); 
     } catch (error) {
       next(error)
     }
@@ -29,7 +30,8 @@ class UserController {
       const { email, password } = req.body;
       const userData = await userService.signIn(email, password);
 
-      return res.json(userData);
+      res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+      return res.json({accessToken: userData.accessToken, userId : userData.userId}); 
     } catch (error) {
       next(error)
     }
@@ -64,19 +66,15 @@ class UserController {
 
     async refresh(req, res, next) {
       try {
-        const authorizationHeader = req.headers.authorization;
-        
-        if (!authorizationHeader){
-          //console.log('no headers')
-          return next(ApiError.UnauthorizedError());
-        }
-        const refreshToken = authorizationHeader.split(" ")[2];
+        const refreshToken = req.cookies.refreshToken;
+
         if (!refreshToken){
           //console.log('no token')
           return next(ApiError.UnauthorizedError());
         }
         const userData = await userService.refresh(refreshToken);
-        return res.json(userData); 
+        res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+        return res.json({accessToken: userData.accessToken, userId : userData.userId}); 
       } catch (error) {
         next(error)
       }
@@ -102,8 +100,7 @@ class UserController {
     try {
         const activationLink = req.params.link;
         await userService.confirmEmail(activationLink);
-
-        //return res.redirect(process.env.CLIENT_URL);
+        //return res.redirect(client url);
         return res.json('confirmed');
     } catch (error) {
       next(error);
