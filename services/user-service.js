@@ -43,6 +43,9 @@ class UserService {
     if (!user) {
       throw ApiError.NotFound('User is not found');
     }
+    if (!user.password) {
+      throw ApiError.BadRequest(`You have been authorized via ${user.createdVia}`);
+    }
     const isPasswordEqual = await bcrypt.compare(password, user.password);
     if (!isPasswordEqual) {
       throw ApiError.BadRequest('Wrong credentials');

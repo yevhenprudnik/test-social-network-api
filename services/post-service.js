@@ -6,7 +6,7 @@ class PostService {
 
 // ------------------------------ Create a Post ------------------------------ //
 
-  async createAPost(postedBy, header, text) {
+  async createPost(postedBy, header, text) {
     const post = await PostModel.create({ postedBy, header, text, date: new Date() });
     
     return post;
@@ -48,7 +48,7 @@ class PostService {
 
 // ------------------------------ Comment a Post ----------------------------- //
 
-  async commentAPost(userId, postId, comment) {
+  async commentPost(userId, postId, comment) {
     const user = await UserModel.findById(userId);
     const post = await PostModel.findById(postId);
     const postAuthor = await UserModel.findOne({ username : post.postedBy });
@@ -69,7 +69,7 @@ class PostService {
 
 // ------------------------------ Like a Posts ----------------------------- //
 
-  async likeAPost(userId, postId) {
+  async likePost(userId, postId) {
     const post = await PostModel.findById(postId);
     const user = await UserModel.findById(userId);
     const postAuthor = await UserModel.findOne({ username : post.postedBy });
@@ -94,7 +94,7 @@ class PostService {
 
 // ------------------------------ Edit a Post ----------------------------- //
 
-  async editAPost(postedBy, postId, newText) {
+  async editPost(postedBy, postId, newText) {
     const post = await PostModel.findById(postId);
     if (!post) {
       throw ApiError.NotFound('Post is not found');
@@ -110,7 +110,7 @@ class PostService {
 
 // ------------------------------ Delete a Post ----------------------------- //
 
-  async deleteAPost(postedBy, postId) {
+  async deletePost(postedBy, postId) {
     const post = await PostModel.findById(postId);
     if (!post) {
       throw ApiError.NotFound('Post is not found');

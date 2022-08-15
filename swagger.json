@@ -5,7 +5,7 @@
     "description": "API for a simple social network. You can post some publications and interact with publications of other users (put likes, write comments) and follow other users.\nFor most functionality(endpoints), you should create an account or log into an existing one.\nAfter authentication, you will receive two tokens (access, refresh). An access token is required to access certain routes. The access token is valid for no more than 30 minutes.\nTo renew the access token, use the refresh token (when renewing the access token, the refresh token also changes!). The refresh token is valid for no more than 30 days",
     "version": "1.0.0"
   },
-  "host": "localhost:3001",
+  "host": ["localhost:3001"],
   "schemes": [
     "http",
     "https"

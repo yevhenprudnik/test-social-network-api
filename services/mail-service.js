@@ -14,7 +14,7 @@ class MailService {
   
   async sendActionMail(to, link){
     await this.transporter.sendMail({
-      from: process.env.SMTP_PORT,
+      from: process.env.SMTP_USER,
       to,
       subject: `Email confirmation`,
       text: '',

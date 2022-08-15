@@ -3,11 +3,11 @@ class PostController {
 
 // -------------------------------- Create a Post ----------------------------------- //
 
-  async createAPost(req, res, next) {
+  async createPost(req, res, next) {
     try {
       const { text, header } = req.body;
       const postedBy = req.user.username;
-      const postData = await postService.createAPost(postedBy, header, text);
+      const postData = await postService.createPost(postedBy, header, text);
 
       return res.json(postData);
     } catch (error) {
@@ -32,11 +32,11 @@ class PostController {
 
 // ------------------------------ Comment a Post -------------------------------- //
 
-  async commentAPost(req, res, next) {
+  async commentPost(req, res, next) {
     try {
       const { postId, comment } = req.body;
       const userId = req.user.id;
-      const userComment = await postService.commentAPost(userId, postId, comment);
+      const userComment = await postService.commentPost(userId, postId, comment);
 
       return res.json(userComment);
     } catch (error) {
@@ -46,12 +46,12 @@ class PostController {
 
 // ------------------------------ Like a Posts -------------------------------- //
 
-  async likeAPost(req, res, next) {
+  async likePost(req, res, next) {
     try {
       const { postId } = req.body;
       const userId = req.user.id;
 
-      const post = await postService.likeAPost(userId, postId);
+      const post = await postService.likePost(userId, postId);
 
       return res.json(post);
     } catch (error) {
@@ -61,11 +61,11 @@ class PostController {
 
 // ------------------------------ Edit a Post -------------------------------- //
 
-  async editAPost(req, res, next) {
+  async editPost(req, res, next) {
     try {
       const { postId, newText } = req.body;
       const postedBy = req.user.username;
-      const newPost = await postService.editAPost(postedBy, postId, newText);
+      const newPost = await postService.editPost(postedBy, postId, newText);
   
       return res.json(newPost)
     } catch (error) {
@@ -74,11 +74,11 @@ class PostController {
   }
 
   // ------------------------------ Delete Post -------------------------------- //
-  async deleteAPost(req, res, next) {
+  async deletePost(req, res, next) {
     try {
       const { postId } = req.body;
       const postedBy = req.user.username;
-      const result = await postService.deleteAPost(postedBy, postId);
+      const result = await postService.deletePost(postedBy, postId);
 
       return res.json(result);
     } catch (error) {
