@@ -16,7 +16,7 @@ class UserController {
           const { email, password, username, fullName } = req.body;
           const userData = await userService.register(email, password, username, fullName);
       
-          res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+          res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true, secure : true });
           return res.json({accessToken: userData.accessToken, userId : userData.userId}); 
     } catch (error) {
       next(error)
@@ -30,7 +30,7 @@ class UserController {
       const { email, password } = req.body;
       const userData = await userService.signIn(email, password);
 
-      res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+      res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true, secure : true });
       return res.json({accessToken: userData.accessToken, userId : userData.userId}); 
     } catch (error) {
       next(error)
@@ -73,7 +73,7 @@ class UserController {
           return next(ApiError.UnauthorizedError());
         }
         const userData = await userService.refresh(refreshToken);
-        res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+        res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true, secure : true });
         return res.json({accessToken: userData.accessToken, userId : userData.userId}); 
       } catch (error) {
         next(error)

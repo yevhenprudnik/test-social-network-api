@@ -7,7 +7,7 @@ class OAuth {
     try {
       const userId = req.user._id;
       const token = await tokenModel.findOne({ user : userId });
-      res.cookie('refreshToken', token.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true });
+      res.cookie('refreshToken', token.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true, secure : true });
       const accessToken = req.user.token;
       res.json({ userId, accessToken });
     } catch (error) {
