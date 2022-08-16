@@ -24,7 +24,7 @@ class UserService {
     const emailConfirmationLink = uuid.v4();
 
     const user = await UserModel.create({ email, username, fullName, password: hashPassword, emailConfirmationLink, memberSince: new Date()});
-    await mailService.sendActionMail(email, `${process.env.API_URL}/api/confirm-email/${emailConfirmationLink}`);
+    await mailService.sendActivationMail(email, `${process.env.API_URL}/user/confirm-email/${emailConfirmationLink}`);
 
     const userDto = new UserDto(user);
     const tokens = tokenService.generateTokens({...userDto}); // without class

@@ -20,7 +20,7 @@ class PostController {
   async getPosts(req, res, next) {
     try {
         const userId = req.user.id;
-        const postId = req.query.id;
+        const postId = req.query.postId;
         const postedBy = req.query.postedBy;
         const posts = await postService.getPosts(postId, userId, postedBy);
 

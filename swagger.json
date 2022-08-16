@@ -5,9 +5,8 @@
     "description": "API for a simple social network. You can post some publications and interact with publications of other users (put likes, write comments) and follow other users.\nFor most functionality(endpoints), you should create an account or log into an existing one.\nAfter authentication, you will receive two tokens (access, refresh). An access token is required to access certain routes. The access token is valid for no more than 30 minutes.\nTo renew the access token, use the refresh token (when renewing the access token, the refresh token also changes!). The refresh token is valid for no more than 30 days",
     "version": "1.0.0"
   },
-  "host": ["localhost:3001"],
+  "host": ["sn-test-app.herokuapp.com"],
   "schemes": [
-    "http",
     "https"
   ],
   "securityDefinitions": {
@@ -15,12 +14,23 @@
       "name": "Authorization",
       "in": "header",
       "type": "apiKey",
-      "description": "JWT Authorization header"
+      "description": "As a response from /user/register, /user/signIn, /user/refresh, /oauth/success (except other data) you will get access token. To stay authorized you have to attach access token to authorization header with keyword 'Bearer' space access token\nExample: \nBearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InlldmhlbnBydWRuaWsiLCJlbWFpbCI6InlldmhlbnBydWRuaWsxQGdtYWlsLmNvbSIsImlkIjoiNjJmYjQxYzcyNGQ5ODE1ZmRmNzAyNDdmIiwiaWF0IjoxNjYwNjMzNTQ0LCJleHAiOjE2NjA2Njk1NDR9.oCtkrtfuqY0CTj7fVrWCD3tAI3lWGWoruMKh-VYz4U4"
+    },
+    "oauthGoogle": {
+      "description" : "Authorization via your Google account",
+      "type": "oauth2",
+      "authorizationUrl": "https://sn-test-app.herokuapp.com/oauth/google",
+      "flow" : "Authorization code"
+    },
+    "oauthFacebook": {
+      "description" : "Authorization via your Facebook account",
+      "type": "oauth2",
+      "authorizationUrl": "https://sn-test-app.herokuapp.com/oauth/facebook",
+      "flow" : "Authorization code"
     }
   },
-  "basePath": "/api",
   "paths": {
-    "/register" : {
+    "/user/register" : {
       "post": {
         "summary": "Endpoint to register for the app, creating new account",
         "description" : "",
@@ -37,6 +47,11 @@
                   "example" : "User 1",
                   "min length": "5",
                   "max length": "32",
+                  "required": true
+                }, 
+                "fullName": {
+                  "type": "string",
+                  "example" : "User Full Name",
                   "required": true
                 },
                 "email": {
@@ -60,14 +75,11 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Access and refresh tokens\nUser object's id that was created",
+            "description" : "Access token\nUser object's id that was created. Refresh token will be set in your cookies",
             "schema": {
               "type": "object",
               "properties" : {
                 "accessToken": {
-                  "$ref": "#/definitions/Token"
-                },
-                "refreshToken": {
                   "$ref": "#/definitions/Token"
                 },
                 "userId": {
@@ -111,7 +123,7 @@
         }
       }
     },
-    "/signIn" : {
+    "/user/signIn" : {
       "post": {
         "summary": "Endpoint to login to existing account",
         "description" : "Login to your account",
@@ -144,14 +156,11 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "Access and refresh tokens\nUser object's id",
+            "description" : "Access token\nUser object's id. Refresh token will be set in your cookies",
             "schema": {
               "type": "object",
               "properties" : {
                 "accessToken": {
-                  "$ref": "#/definitions/Token"
-                },
-                "refreshToken": {
                   "$ref": "#/definitions/Token"
                 },
                 "userId": {
@@ -195,7 +204,7 @@
         }
       }
     },
-    "/signOut": {
+    "/user/signOut": {
       "get": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to logout from app via access token",
@@ -225,10 +234,10 @@
         }
       }
     },
-    "/refresh": {
+    "/user/refresh": {
       "get": {
         "summary": "Endpoint to renew an access token via refresh token",
-        "description": "",
+        "description": "Refresh token is set in your cookies",
         "tags": [
           "Auth"
         ],
@@ -239,9 +248,6 @@
               "type": "object",
               "properties" : {
                 "accessToken": {
-                  "$ref": "#/definitions/Token"
-                },
-                "refreshToken": {
                   "$ref": "#/definitions/Token"
                 },
                 "userId": {
@@ -259,10 +265,10 @@
         }
       }
     },
-    "/check-auth": {
+    "/user/check-auth": {
       "get": {
         "security": [ { "bearerAuth": [] } ],
-        "summary": "Endpoint to get authorized via access token and ger additional data",
+        "summary": "Endpoint to get authorized via access token and get additional data",
         "description": "",
         "tags": [
           "Auth"
@@ -291,16 +297,24 @@
         }
       }
     },
-    "/posts": {
+    "/post/posts": {
       "get": {
         "summary": "Endpoint to get posts/post list",
-        "description": "Responses with array of all posts objects if id is not provided in query.\nIf id of user is provided, responses with array of user's posts.\nIf id of a specific post is provided, responses with one post object.",
+        "security": [ { "bearerAuth": [] } ],
+        "description": "Response depending on query parameters you provide\n1)Nothing is provided - responses with and array of post objects that was created by your friends(if you have no friends responses with an empty array)\n2)Post Id is provided - response with a single post object only if it was created by friend\n3)Username is provided - response with an array of post objects that was created by the user only if he is your friend or you",
         "parameters": [
           {
-            "name": "id",
+            "name": "postId",
             "in": "query",
             "example" : "62f3d91ac6ca216a5esd8197",
-            "description": "An id of the post or an id of the user",
+            "description": "An ID of the post",
+            "type": "string"
+          },
+          {
+            "name": "postedBy",
+            "in": "query",
+            "example" : "yevhenprudnik",
+            "description": "Username of the user you want to get pots from",
             "type": "string"
           }
         ],
@@ -341,55 +355,7 @@
         }
       }
     },
-    "/following-posts": {
-      "post": {
-        "security": [ { "bearerAuth": [] } ],
-        "summary": "Endpoint to get posts/post list of the users you follow",
-        "description": "",
-        "parameters": [
-          {
-            "name": "following",
-            "in": "body",
-            "description": "An array of ids of users you follow",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "followingIdsArray": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "example" : 
-                  ["62f3d92ac6ca21665e1d8197", "62f3983c81a2499143ea91bf", "62f3a8qc8qa24a9143ea91bf"]
-                }
-              }
-            }
-          }
-        ],
-        "tags": [
-          "Posts"
-        ],
-        "responses": {
-          "200": {
-            "description": "An array of posts of users you provided in array",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Post"
-              }
-            }
-          },
-          "401" : {
-            "description" : "Access token is not valid",
-            "schema": {
-              "$ref" : "#/definitions/UnauthorizedError"
-            }
-          }
-        }
-      }
-    },
-    "/create-post" : {
+    "/post/create-post" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to create a post",
@@ -402,6 +368,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "header": {
+                  "type": "string",
+                  "example" : "Some amazing header",
+                  "required": true
+                },
                 "text": {
                   "type": "string",
                   "example" : "Some amazing text",
@@ -446,7 +417,7 @@
         }
       }
     },
-    "/edit-post" : {
+    "/post/edit-post" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to edit your post",
@@ -508,7 +479,7 @@
         }
       }
     },
-    "/like-post" : {
+    "/post/like-post" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to like someone's post",
@@ -565,7 +536,7 @@
         }
       }
     },
-    "/comment-post" : {
+    "/post/comment-post" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to comment someone's post",
@@ -627,7 +598,7 @@
         }
       }
     },
-    "/delete-post" : {
+    "/post/delete-post" : {
       "delete": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to delete your post",
@@ -690,16 +661,17 @@
         }
       }
     },
-    "/user": {
+    "/user/user": {
       "get": {
-        "summary": "Endpoint to get information about the user",
-        "description": "User object",
+        "summary": "Endpoint to get information about the user/users",
+        "description": "If the user you want to get information about is your friend you will get username, fullName, avatar, email, friends, memberSince, and id fields\nIf the user is not your friend you will get only username, fullName, avatar, and id fields",
+        "security" : [ { "bearerAuth": [] } ],
         "parameters": [
           {
-            "name": "id",
+            "name": "user",
             "in": "query",
-            "example" : "62f3d92ac6ca21665e1d8197",
-            "description": "An id of the user",
+            "example" : "Mike",
+            "description": "Username or fullName of the user you want to get information about",
             "type": "string"
           }
         ],
@@ -708,9 +680,12 @@
         ],
         "responses": {
           "200": {
-            "description": "User data",
+            "description": "Array of User object/objects",
             "schema" : {
-              "$ref" : "#/definitions/User"
+              "type": "array",
+              "items" : {
+                "$ref" : "#/definitions/Friend"
+              }
             }
           },
           "404" : {
@@ -732,7 +707,7 @@
         }
       }
     },
-    "/confirm-email/{link}": {
+    "/user/confirm-email/{link}": {
       "get": {
         "summary": "Endpoint to confirm your email",
         "description": "",
@@ -775,22 +750,22 @@
         }
       }
     },
-    "/follow" : {
+    "/user/send-request": {
       "post": {
         "security": [ { "bearerAuth": [] } ],
-        "summary": "Endpoint to follow the user",
+        "summary": "Endpoint to send request to become a friend with user",
         "description" : "",
         "parameters": [
           {
-            "name": "Id of user you want to follow",
+            "name": "Username of a user you want to be friend with",
             "in": "body",
             "required": true,
             "schema": {
               "type": "object",
               "properties": {
-                "userToFollow": {
+                "requestFriend": {
                   "type": "string",
-                  "example" : "62f3d91ac6ca216a5esd8197",
+                  "example" : "JackNicholson",
                   "required": true
                 }
               }
@@ -802,20 +777,20 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "An array of users' ids that user follows",
+            "description" : "An array of your outcoming requests",
             "schema" : {
               "type" : "array",
-              "example": ["62f3d91ac6ca216a5esd8197", "62f243e582dd47ba5d379f02", "62f3983c81a2499143ea91bs"]
+              "example": ["JackNicholson", "DanielDayLevis", "AnthonyHopkins"]
             }
           },
           "400" : {
-            "description" : "User is trying to follow a user that is already in his following",
+            "description" : "User is trying to send request to a user that is already his friend",
             "schema" : {
               "type" : "object",
               "properties" : {
                 "message" : {
                   "type" : "string",
-                  "example" : "You are already following this user"
+                  "example" : "You are already friends with JackNicholson"
                 },
                 "errors" : {
                   "type" : "array",
@@ -849,22 +824,22 @@
         }
       }
     },
-    "/unfollow" : {
+    "/user/accept-request" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
-        "summary": "Endpoint to unfollow the user",
+        "summary": "Endpoint to accept request to become a friend with user",
         "description" : "",
         "parameters": [
           {
-            "name": "Id of user you want to unfollow",
+            "name": "Username of a user you want to accept request from",
             "in": "body",
             "required": true,
             "schema": {
               "type": "object",
               "properties": {
-                "userToUnfollow": {
+                "acceptFriend": {
                   "type": "string",
-                  "example" : "62f3d91ac6ca216a5esd8197",
+                  "example" : "JackNicholson",
                   "required": true
                 }
               }
@@ -876,20 +851,20 @@
         ],
         "responses" : {
           "200" : {
-            "description" : "An array of users' ids that user follows",
+            "description" : "An array of your friends",
             "schema" : {
               "type" : "array",
-              "example": ["62f3d91ac6ca216a5esd8197", "62f243e582dd47ba5d379f02", "62f3983c81a2499143ea91bs"]
+              "example": ["JackNicholson", "DanielDayLevis", "AnthonyHopkins"]
             }
           },
           "400" : {
-            "description" : "User is trying to unfollow a user he is not following",
+            "description" : "User is trying to accept request from a user that is already his friend",
             "schema" : {
               "type" : "object",
               "properties" : {
                 "message" : {
                   "type" : "string",
-                  "example" : "You are not following this user"
+                  "example" : "You are already friends with JackNicholson"
                 },
                 "errors" : {
                   "type" : "array",
@@ -923,7 +898,155 @@
         }
       }
     },
-    "/change-avatar" : {
+    "/user/reject-request" : {
+      "post": {
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to reject request from a user",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Username of a user you want to reject",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rejectFriend": {
+                  "type": "string",
+                  "example" : "JackNicholson",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "An array of your friends",
+            "schema" : {
+              "type" : "array",
+              "example": ["DanielDayLevis", "AnthonyHopkins"]
+            }
+          },
+          "400" : {
+            "description" : "User is trying to reject request from a user that is already his friend",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "type" : "string",
+                  "example" : "You are already friends with JackNicholson"
+                },
+                "errors" : {
+                  "type" : "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "User is not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/delete-friend" : {
+      "delete": {
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to delete user from your friends",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Username of a user you want to delete from your friends",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "deleteFriend": {
+                  "type": "string",
+                  "example" : "JackNicholson",
+                  "required": true
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "An array of your friends",
+            "schema" : {
+              "type" : "array",
+              "example": ["DanielDayLevis", "AnthonyHopkins"]
+            }
+          },
+          "400" : {
+            "description" : "User is trying to delete user who is not his friend",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "type" : "string",
+                  "example" : "You are not friends with JackNicholson"
+                },
+                "errors" : {
+                  "type" : "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "404" : {
+            "description" : "User is not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "User is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/change-avatar" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to change your profile image",
@@ -980,6 +1103,47 @@
           }
         }
       }
+    },
+    "/oauth/success" : {
+      "get" : {
+        "summary": "Authorization via Google or Facebook",
+        "security" : [ { "oauthGoogle": [] }, { "oauthFacebook" : [] } ],
+        "tags": [
+          "OAuth"
+        ],
+        "responses": {
+          "200" : {
+            "description" : "User ID and access token",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "accessToken" : {
+                  "$ref" : "#/definitions/Token"
+                },
+                "userId": {
+                  "$ref": "#/definitions/ObjectId"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Authorization failed",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Authorization failed"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -987,12 +1151,16 @@
       "description" : "User object",
       "type": "object",
       "properties": {
-        "_id" : {
+        "id" : {
           "$ref": "#/definitions/ObjectId"
         },
         "username": {
           "type": "string",
           "example": "Yevhen"
+        },
+        "fullName": {
+          "type": "string",
+          "example": "Yevhen Prudnik"
         },
         "email": {
           "type": "string",
@@ -1010,16 +1178,65 @@
           "type": "boolean",
           "example": false
         },
-        "following": {
+        "friends": {
           "type": "array",
           "items" : {
-            "$ref" : "#/definitions/ObjectId"
+            "type" : "string",
+            "example" : "Alex"
           }
         },
-        "followers": {
+        "outcomingRequests": {
           "type": "array",
           "items" : {
-            "$ref" : "#/definitions/ObjectId"
+            "type" : "string",
+            "example" : "Mike"
+          }
+        },
+        "incomingRequests": {
+          "type": "array",
+          "items" : {
+            "type" : "string",
+            "example" : "Fred"
+          }
+        },
+        "createdVia" : {
+          "type": "string",
+          "example" : "facebook"
+        }
+      }
+    },
+    "Friend": {
+      "description" : "User friend object",
+      "type": "object",
+      "properties": {
+        "id" : {
+          "$ref": "#/definitions/ObjectId"
+        },
+        "username": {
+          "type": "string",
+          "example": "Yevhen"
+        },
+        "fullName": {
+          "type": "string",
+          "example": "Yevhen Prudnik"
+        },
+        "email": {
+          "type": "string",
+          "example": "yevhen@gmail.com"
+        },
+        "avatar": {
+          "type": "string",
+          "example": "http://tachyons.io/img/avatar_1.jpg"
+        },
+        "memberSince": {
+          "type": "date",
+          "example" : "2022-08-11T06:19:53.226+00:00"
+        },
+        "friends": {
+          "type": "array",
+          "items" : {
+            "type" : "string",
+            "example" : "Alex"
           }
         }
       }
@@ -1032,16 +1249,12 @@
           "$ref": "#/definitions/ObjectId"
         },
         "postedBy": {
-          "type" : "object",
-          "properties" : {
-            "_id": {
-              "$ref": "#/definitions/ObjectId"
-            },
-            "username": {
-              "type": "string",
-              "example" : "Yevhen"
-            }
-          }
+          "type" : "string",
+          "example" : "Yevhen"
+        },
+        "header": {
+          "type": "string",
+          "example" : "Post header"
         },
         "text": {
           "type": "string",
@@ -1050,7 +1263,8 @@
         "likedBy": {
           "type": "array",
           "items" : {
-            "$ref": "#/definitions/ObjectId"
+            "type" : "string",
+            "example" : "Alex"
           }
         },
         "date" : {
@@ -1063,16 +1277,8 @@
             "type" : "object",
             "properties" : {
               "writtenBy": {
-                "type" : "object",
-                "properties" : {
-                  "_id" : {
-                    "$ref": "#/definitions/ObjectId"
-                  }, 
-                  "username" : {
-                    "type" : "string",
-                    "example" : "Yevhen"
-                  }
-                }
+                "type" : "string",
+                "example" : "Alex"
               },
               "comment": {
                 "type": "string",
@@ -1111,7 +1317,7 @@
       }
     },
     "InvalidIdError" : {
-      "description" : "Object is not a valid",
+      "description" : "Object ID is not a valid",
       "type" : "object",
       "properties" : {
         "message" : {

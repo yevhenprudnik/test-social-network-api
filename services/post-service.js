@@ -51,12 +51,15 @@ class PostService {
   async commentPost(userId, postId, comment) {
     const user = await UserModel.findById(userId);
     const post = await PostModel.findById(postId);
-    const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
-      throw ApiError.Forbidden("You can't see posts of users you are not friends with");
-    }
     if (!post) {
       throw ApiError.NotFound('Post is not found');
+    }
+    if (!user){
+      throw ApiError.NotFound('User is not found');
+    }
+    const postAuthor = await UserModel.findOne({ username : post.postedBy });
+    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+      throw ApiError.Forbidden("You can't comment posts of users you are not friends with");
     }
     post.comments.push({
       writtenBy: user.username,
@@ -72,12 +75,15 @@ class PostService {
   async likePost(userId, postId) {
     const post = await PostModel.findById(postId);
     const user = await UserModel.findById(userId);
-    const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
-      throw ApiError.Forbidden("You can't see posts of users you are not friends with");
-    }
     if (!post) {
       throw ApiError.NotFound('Post is not found');
+    }
+    if (!user){
+      throw ApiError.NotFound('User is not found');
+    }
+    const postAuthor = await UserModel.findOne({ username : post.postedBy });
+    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+      throw ApiError.Forbidden("You can't like posts of users you are not friends with");
     }
     const likes = post.likedBy;
     //console.log(`likes: ${likes}`, `User id: ${userId}`);

@@ -12,18 +12,16 @@ class MailService {
     })
   }
   
-  async sendActionMail(to, link){
+  async sendActivationMail(to, link){
     await this.transporter.sendMail({
-      from: process.env.SMTP_USER,
+      from: "Social Network",
       to,
       subject: `Email confirmation`,
       text: '',
       html:
         `
           <div>
-            <h1>To confirm your email click the button below</h1>
-            <button href="${link}">CONFIRM</button>
-            <h1>Or follow the link below</h1>
+            <h1>To confirm your email follow the link below</h1>
             <a href="${link}">${link}</a>
           </div>
         `

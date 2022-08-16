@@ -11,13 +11,11 @@ class OAuth {
       const accessToken = req.user.token;
       res.json({ userId, accessToken });
     } catch (error) {
-      next(error);
+      next(ApiError.BadRequest('Authorization failed'));
     }
   }
 
-  async onFail(req, res, next) {
-    return next(ApiError.UnauthorizedError());
-  }
+  async onFail(req, res, next) { return next(ApiError.BadRequest('Authorization failed')) }
 
 }
 
