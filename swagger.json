@@ -1148,10 +1148,10 @@
   },
   "definitions": {
     "User" : {
-      "description" : "User object",
+      "description" : "Authorized user's object. Gets returned only from /user/check-auth route",
       "type": "object",
       "properties": {
-        "id" : {
+        "_id" : {
           "$ref": "#/definitions/ObjectId"
         },
         "username": {
@@ -1241,6 +1241,27 @@
         }
       }
     },
+    "Stranger": {
+      "description" : "User stranger(non friend) object",
+      "type": "object",
+      "properties": {
+        "id" : {
+          "$ref": "#/definitions/ObjectId"
+        },
+        "username": {
+          "type": "string",
+          "example": "Yevhen"
+        },
+        "fullName": {
+          "type": "string",
+          "example": "Yevhen Prudnik"
+        },
+        "avatar": {
+          "type": "string",
+          "example": "http://tachyons.io/img/avatar_1.jpg"
+        }
+      }
+    },
     "Post":{
       "description": "Post object",
       "type" : "object",
@@ -1316,7 +1337,7 @@
         }
       }
     },
-    "InvalidIdError" : {
+    "InvalidIDError" : {
       "description" : "Object ID is not a valid",
       "type" : "object",
       "properties" : {

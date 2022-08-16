@@ -55,7 +55,7 @@ class UserController {
   async auth(req, res, next) {
     try {
         const userData = req.user
-        const additionalData = await userService.getFullUserData(userData.id); //additional data for client
+        const additionalData = await userService.getFullUserData(userData.id); //additional data for the client
         res.json({ userId: userData.id, additionalData });
     } catch (error) {
       next(error)

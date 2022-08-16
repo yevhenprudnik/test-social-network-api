@@ -26,7 +26,7 @@ app.use( errorMiddleware );
 app.get('/documentation', swaggerUi.setup(swaggerDocument));
 
 app.get('/', (req, res) => {
-  res.json("it's working!");
+  res.json(`Documentation: ${process.env.API_URL}/documentation`);
 })
 
 const start = (async () => {
