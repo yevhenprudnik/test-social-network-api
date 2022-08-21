@@ -1,5 +1,5 @@
 const Router = require('express').Router;
-const oauthRouter = new Router();
+const oauthRouter = new Router(); // TODO: can be just router = new Route();
 const passport = require('passport');
 require('../OAuth2.0/google-auth-setup');
 require('../OAuth2.0/facebook-auth-setup');
@@ -7,10 +7,12 @@ const OAuth = require('../OAuth2.0/OAuth');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 
+// TODO: rename directory to routes
+// TODO: rename file to oauth-route.js
 
 oauthRouter.use( cookieParser() );
 oauthRouter.use(session({
-  secret: 'keyboard cat',
+  secret: 'keyboard cat', // TODO: env
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false }

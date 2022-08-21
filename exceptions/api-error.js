@@ -16,7 +16,7 @@ module.exports = class ApiError extends Error {
     static NotFound(message, errors = []) {
       return new ApiError(404, message, errors);
     }
-
+    // TODO: 405???
     static Forbidden(message, errors = []) {
       return new ApiError(405, message, errors);
     }

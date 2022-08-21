@@ -51,6 +51,9 @@ async function(accessToken, refreshToken, profile, done) {
         createdVia: 'google',
         memberSince: new Date()});
 
+        // TODO: the same code in facebook auth setup (add function for that)
+
+
         await mailService.sendActivationMail(profile.emails[0].value, `${process.env.API_URL}/user/confirm-email/${emailConfirmationLink}`);
         
         const userDto = new UserDto(user);

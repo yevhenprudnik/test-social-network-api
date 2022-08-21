@@ -107,6 +107,8 @@ class UserController {
     }
   }
 
+  // TODO: create friend-controller
+
 // ------------------------------ Send friend request -------------------------------- //
 
   async sendRequest(req, res, next) {

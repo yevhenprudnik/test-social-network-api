@@ -10,6 +10,7 @@ const UserSchema = new Schema({
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
   memberSince: { type: Date},
+  // TODO: add model
   friends : [String],
   outcomingRequests: [String],
   incomingRequests: [String],
