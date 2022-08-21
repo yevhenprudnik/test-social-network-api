@@ -6,6 +6,8 @@ const authMiddleware = require('../middleware/auth-middleware');
 
 userRouter.get('/', (req, res) => {res.json("userRouter's working")});
 
+// TODO: the same problems as in post routes
+
 userRouter.post('/register',
   body('email').isEmail(),
   body('password').isLength({min: 5, max: 32}),

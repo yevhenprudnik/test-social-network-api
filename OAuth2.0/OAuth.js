@@ -1,6 +1,8 @@
 const ApiError = require('../exceptions/api-error');
 const tokenModel = require('../models/token-model');
 
+// TODO: rename file to oauth.handler.js
+
 class OAuth {
 
   async onSuccess(req, res, next) {

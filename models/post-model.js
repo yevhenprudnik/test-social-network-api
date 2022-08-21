@@ -6,6 +6,7 @@ const PostSchema = new Schema({
   header: { type: String, required: true },
   text: { type: String, required: true },
   date: { type: Date},
+  // TODO: add model
   likedBy: [ String ],
   comments: [{
     writtenBy: { type: String },

@@ -7,6 +7,8 @@ const mailService = require('../services/mail-service');
 const tokenService = require('../services/token-service');
 const UserDto = require('../dto/user-dto');
 
+// TODO: why does it not exists in controllers/services folder?
+
 passport.serializeUser((user, done) => {
   done(null, user._id);
 });
@@ -50,6 +52,9 @@ async function(accessToken, refreshToken, profile, done) {
         createdVia: 'facebook',
         avatar : profile.photos[0].value,
         memberSince: new Date()});
+
+
+        // TODO: the same code in google auth setup (add function for that)
 
         await mailService.sendActivationMail(profile.emails[0].value, `${process.env.API_URL}/user/confirm-email/${emailConfirmationLink}`);
         

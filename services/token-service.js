@@ -29,6 +29,8 @@ class TokenService {
       if(!user){
         return null;
       }
+
+      // TODO: return jwt.verify(token, process.env.JWT_SECRET_ACCESS); can be?)
       const userData = jwt.verify(token, process.env.JWT_SECRET_ACCESS);
       return userData;
     } catch (error) {

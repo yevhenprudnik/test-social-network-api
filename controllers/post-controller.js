@@ -1,4 +1,5 @@
 const postService = require('../services/post-service');
+// TODO: add space after require for (all files)
 class PostController {
 
 // -------------------------------- Create a Post ----------------------------------- //
@@ -16,12 +17,15 @@ class PostController {
   }
 
 // --------------------------------- Get posts/post ------------------------------- //
-
+  // TODO: add separate action for getPost
   async getPosts(req, res, next) {
     try {
         const userId = req.user.id;
         const postId = req.query.postId;
         const postedBy = req.query.postedBy;
+        // TODO: use can use getPosts({ userId: req.user.id, postedBy: req.postedBy })
+
+        // TODO: add pagination
         const posts = await postService.getPosts(postId, userId, postedBy);
 
         res.json(posts);
@@ -31,6 +35,8 @@ class PostController {
   }
 
 // ------------------------------ Comment a Post -------------------------------- //
+
+  // TODO: create comment-controller
 
   async commentPost(req, res, next) {
     try {
@@ -43,6 +49,8 @@ class PostController {
       next(error);
     }
   }
+
+  // TODO: create like-controller
 
 // ------------------------------ Like a Posts -------------------------------- //
 

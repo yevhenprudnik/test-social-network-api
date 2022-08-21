@@ -8,6 +8,7 @@ module.exports = async (req, res, next) => {
         //console.log('no headers')
         return next(ApiError.UnauthorizedError());
       }
+
       const accessToken = authorizationHeader.split(" ")[1];
       if (!accessToken){
         //console.log('no token')

@@ -12,6 +12,7 @@ class UserService {
   // -------------------------------- Registration -------------------------------- //
   
   async register(email, password, username, fullName) {
+    // TODO: optimize check
     const candidateByEmail = await UserModel.findOne({ email }); // Check if user is already registered
     if (candidateByEmail) {
       throw ApiError.Conflict(`User ${email} is already registered`);
@@ -82,6 +83,8 @@ class UserService {
 
     await user.save();
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
+
+    // TODO: what will happen with the old token?
 
     return { ...tokens, userId : user._id };
   }
