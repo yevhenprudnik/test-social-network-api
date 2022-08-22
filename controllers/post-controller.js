@@ -1,8 +1,6 @@
 const postService = require('../services/post-service');
-// TODO: add space after require for (all files)
-class PostController {
 
-// -------------------------------- Create a Post ----------------------------------- //
+class PostController {
 
   async createPost(req, res, next) {
     try {
@@ -16,17 +14,11 @@ class PostController {
     }
   }
 
-// --------------------------------- Get posts/post ------------------------------- //
-  // TODO: add separate action for getPost
-  async getPosts(req, res, next) {
+  async getFriendsPosts(req, res, next) {
     try {
         const userId = req.user.id;
-        const postId = req.query.postId;
-        const postedBy = req.query.postedBy;
-        // TODO: use can use getPosts({ userId: req.user.id, postedBy: req.postedBy })
-
-        // TODO: add pagination
-        const posts = await postService.getPosts(postId, userId, postedBy);
+        const page = req.query.page || 0;
+        const posts = await postService.getFriendsPosts(userId, page);
 
         res.json(posts);
     } catch (error) {
@@ -34,40 +26,30 @@ class PostController {
     }
   }
 
-// ------------------------------ Comment a Post -------------------------------- //
-
-  // TODO: create comment-controller
-
-  async commentPost(req, res, next) {
+  async getPost(req, res, next) {
     try {
-      const { postId, comment } = req.body;
-      const userId = req.user.id;
-      const userComment = await postService.commentPost(userId, postId, comment);
+        const userId = req.user.id;
+        const postId = req.params.id;
+        const post = await postService.getPost(postId, userId);
 
-      return res.json(userComment);
+        res.json(post);
     } catch (error) {
       next(error);
     }
   }
 
-  // TODO: create like-controller
-
-// ------------------------------ Like a Posts -------------------------------- //
-
-  async likePost(req, res, next) {
+  async getUserPosts(req, res, next) {
     try {
-      const { postId } = req.body;
-      const userId = req.user.id;
+        const userId = req.user.id;
+        const postedBy = req.params.postedBy;
+        const page = req.query.page || 0;
+        const posts = await postService.getUserPosts(postedBy, userId, page);
 
-      const post = await postService.likePost(userId, postId);
-
-      return res.json(post);
+        res.json(posts);
     } catch (error) {
       next(error);
     }
   }
-
-// ------------------------------ Edit a Post -------------------------------- //
 
   async editPost(req, res, next) {
     try {
@@ -81,7 +63,6 @@ class PostController {
     }
   }
 
-  // ------------------------------ Delete Post -------------------------------- //
   async deletePost(req, res, next) {
     try {
       const { postId } = req.body;

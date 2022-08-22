@@ -1,9 +1,8 @@
 const ApiError = require('../exceptions/api-error');
 const tokenModel = require('../models/token-model');
+const oauthService = require('../services/oauth-service')
 
-// TODO: rename file to oauth.handler.js
-
-class OAuth {
+class OAuthController {
 
   async onSuccess(req, res, next) {
     try {
@@ -19,6 +18,16 @@ class OAuth {
 
   async onFail(req, res, next) { return next(ApiError.BadRequest('Authorization failed')) }
 
+  async auth(accessToken, refreshToken, profile, next) {
+    try {
+      const user = await oauthService(profile);
+      
+      return next(null, user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }
 
-module.exports = new OAuth();
+module.exports = new OAuthController();

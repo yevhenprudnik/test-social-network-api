@@ -1,5 +1,3 @@
-// TOOD: change folder's name to dtos
-
 module.exports = class FriendDto {
   constructor(model) {
     this.username = model.username;

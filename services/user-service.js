@@ -1,6 +1,6 @@
-const UserDto = require('../dto/user-dto');
-const FriendDto = require('../dto/friend-dto');
-const StrangerDto = require('../dto/stranger-dto');
+const UserDto = require('../dtos/user-dto');
+const FriendDto = require('../dtos/friend-dto');
+const StrangerDto = require('../dtos/stranger-dto');
 const ApiError = require('../exceptions/api-error');
 const UserModel = require('../models/user-model');
 const bcrypt = require('bcrypt');
@@ -8,18 +8,24 @@ const tokenService = require('./token-service');
 const mailService = require('./mail-service');
 const uuid = require('uuid');
 class UserService {
-
-  // -------------------------------- Registration -------------------------------- //
-  
+  /**
+   * @param email
+   *   User email.
+   * @param password
+   *   User password.
+   * @param username
+   *   User username.
+   * @param fullName
+   *   User Full Name.
+   */
   async register(email, password, username, fullName) {
-    // TODO: optimize check
-    const candidateByEmail = await UserModel.findOne({ email }); // Check if user is already registered
-    if (candidateByEmail) {
-      throw ApiError.Conflict(`User ${email} is already registered`);
-    }
-    const candidateByUsername = await UserModel.findOne({ username });
-    if (candidateByUsername) {
-      throw ApiError.Conflict(`User ${username} is already registered`);
+    const candidate = await UserModel.findOne({ $or:[ { email }, { username } ]}); // Check if user is already registered
+    if (candidate) {
+      if (candidate.username === username && candidate.email !== email) {
+      throw ApiError.Conflict(`Username ${username} is already taken, please try to come up with a different username`);
+      } else {
+        throw ApiError.Conflict(`User with email ${email} is already registered`);
+      }
     }
     const hashPassword = await bcrypt.hash(password, 3);
     const emailConfirmationLink = uuid.v4();
@@ -37,15 +43,13 @@ class UserService {
     return { ...tokens, userId: user._id };
   }
   
-  // -------------------------------- Signing in -------------------------------- //
-
   async signIn(email, password) {
     const user = await UserModel.findOne({ email });
     if (!user) {
       throw ApiError.NotFound('User is not found');
     }
-    if (!user.password) {
-      throw ApiError.BadRequest(`You have been authorized via ${user.createdVia}`);
+    if (user.oauth) {
+      throw ApiError.BadRequest(`You have been authorized via google/facebook`);
     }
     const isPasswordEqual = await bcrypt.compare(password, user.password);
     if (!isPasswordEqual) {
@@ -61,18 +65,17 @@ class UserService {
 
     return { ...tokens, userId: user._id };
   }
-
-// -------------------------------- Refresh Token -------------------------------- //
-
+  /**
+   * @param refreshToken
+   *   Refresh token(token to renew access token)
+   */
   async refresh(refreshToken) {
     if (!refreshToken) {
-        //console.log('no token')
-        throw ApiError.UnauthorizedError();
+      throw ApiError.UnauthorizedError();
     }
     const userData = tokenService.validateRefreshToken(refreshToken);
     const tokenFromDb = await tokenService.findToken(refreshToken);
     if (!tokenFromDb || !userData) {
-      //console.log('wrong token')
       throw ApiError.UnauthorizedError();
     }
     const user = await UserModel.findById(userData.id);
@@ -85,12 +88,12 @@ class UserService {
     await tokenService.saveToken(userDto.id, tokens.refreshToken);
 
     // TODO: what will happen with the old token?
-
     return { ...tokens, userId : user._id };
   }
-
-  // -------------------------------- Email Confirmation -------------------------------- //
-
+  /**
+   * @param emailConfirmationLink
+   *   Email confirmation link(unique for each user)
+   */
   async confirmEmail(emailConfirmationLink) {
     const user = await UserModel.findOne({ emailConfirmationLink });
     if (!user) {
@@ -99,9 +102,10 @@ class UserService {
     user.confirmedEmail = true;
     await user.save();
   }
-
-// ------------------------------ Additional Data ------------------------------ //
-
+  /**
+   * @param userId
+   *   User id
+   */
   async getFullUserData(userId){
     const user = await UserModel.findById(userId)
     .select('confirmedEmail username fullName email avatar friends incomingRequests outcomingRequests memberSince');
@@ -110,10 +114,10 @@ class UserService {
     }
     return user;
   }
-  
-
-// ------------------------------ Users Data ------------------------------ //
-
+  /**
+   * @param userToFind
+   *   Username or full name of a user to find
+   */
   async getUserData(userId, userToFind){
     const user = await UserModel.findById(userId);
     const users = await UserModel.find({ $or:[ { 'username' : userToFind}, { 'fullName' : userToFind } ]});
@@ -126,9 +130,10 @@ class UserService {
     })
     return resultUsersArray;
   }
-
-// ----------------------------- Send friend request ----------------------------------- //
-
+  /**
+   * @param requestFriend
+   *   Username of a user you want to be friends with
+   */
   async sendRequest(userId, requestFriend){
     const user = await UserModel.findById(userId);
     const userToBeFriend = await UserModel.findOne({ username : requestFriend });
@@ -149,9 +154,10 @@ class UserService {
     await userToBeFriend.save();
     return user.outcomingRequests;
   }
-  
-// ----------------------------- Accept friend request ----------------------------------- //
-  
+  /**
+   * @param acceptFriend
+   *   Username of a user you want to accept request from.
+   */
   async acceptRequest(userId, acceptFriend){
     const user = await UserModel.findById(userId);
     const userToAccept = await UserModel.findOne({ username : acceptFriend });
@@ -178,9 +184,10 @@ class UserService {
     await userToAccept.save();
     return user.friends;
   }
-
-// ----------------------------- Reject friend request ----------------------------------- //
-  
+  /**
+   * @param rejectFriend
+   *   Username of a user you want to reject request from.
+   */
   async rejectRequest(userId, rejectFriend){
     const user = await UserModel.findById(userId);
     const userToReject = await UserModel.findOne({ username : rejectFriend });
@@ -205,9 +212,10 @@ class UserService {
     await userToReject.save();
     return user.friends;
   }
-
-// ----------------------------- Delete friend ----------------------------------- //
-  
+  /**
+   * @param deleteFriend
+   *   Username of a user you want to delete from friends list.
+   */
   async deleteFriend(userId, deleteFriend){
     const user = await UserModel.findById(userId);
     const userToDelete = await UserModel.findOne({ username : deleteFriend });
@@ -230,9 +238,10 @@ class UserService {
     await userToDelete.save();
     return user.friends;
   }
-
-// ----------------------------- Change Avatar ----------------------------------- //
-
+  /**
+   * @param newAvatar
+   *   Link to a new avatar.
+   */
   async changeAvatar(userId, newAvatar){
     const user = await UserModel.findById(userId);
     if (!user) {
