@@ -5,8 +5,6 @@ const ApiError = require('../exceptions/api-error');
 
 class UserController {
   
-// -------------------------------- Registration -------------------------------- //
-
   async register(req, res, next) {
     try {
           const errors = validationResult(req);
@@ -23,8 +21,6 @@ class UserController {
     }
   }
 
-// -------------------------------- Signing in -------------------------------- //
-
   async signIn(req, res, next) {
     try {
       const { email, password } = req.body;
@@ -37,8 +33,6 @@ class UserController {
     }
   }
 
-  // -------------------------------- Signing out -------------------------------- //
-
   async signOut(req, res, next) {
     try {
       const userId = req.user.id;
@@ -50,8 +44,6 @@ class UserController {
     }
   }
 
-// ------------------------------ Auth ----------------------------- //
-
   async auth(req, res, next) {
     try {
         const userData = req.user
@@ -62,14 +54,11 @@ class UserController {
     }
   }
 
-// -------------------------------- Refresh Token -------------------------------- //
-
     async refresh(req, res, next) {
       try {
         const refreshToken = req.cookies.refreshToken;
 
         if (!refreshToken){
-          //console.log('no token')
           return next(ApiError.UnauthorizedError());
         }
         const userData = await userService.refresh(refreshToken);
@@ -80,12 +69,10 @@ class UserController {
       }
     }
 
-// ------------------------------ Get User -------------------------------- //
-
   async getUser(req, res, next) {
     try {
         const userId = req.user.id;
-        const userToFind = req.query.user;
+        const userToFind = req.params.user;
         const user = await userService.getUserData(userId, userToFind);
 
         res.json(user)
@@ -94,78 +81,15 @@ class UserController {
     }
   }
 
-// -------------------------------- Email Confirmation -------------------------------- //
-
   async confirmEmail(req, res, next) {
     try {
         const activationLink = req.params.link;
         await userService.confirmEmail(activationLink);
-        //return res.redirect(client url);
         return res.json('confirmed');
     } catch (error) {
       next(error);
     }
   }
-
-  // TODO: create friend-controller
-
-// ------------------------------ Send friend request -------------------------------- //
-
-  async sendRequest(req, res, next) {
-    try {
-      const { requestFriend } = req.body;
-      const userId = req.user.id;
-      const outcomingRequests = await userService.sendRequest(userId, requestFriend);
-      
-      return res.json(outcomingRequests);
-    } catch (error) {
-      next(error)
-    }
-  }
-
-// ------------------------------ Accept friend request --------------------------------- //
-
-  async acceptRequest(req, res, next) {
-    try {
-      const { acceptFriend } = req.body;
-      const userId = req.user.id;
-      const userFriends = await userService.acceptRequest(userId, acceptFriend);
-      
-      return res.json(userFriends);
-    } catch (error) {
-      next(error)
-    }
-  }
-
-// ------------------------------ Reject friend request --------------------------------- //
-
-  async rejectRequest(req, res, next) {
-    try {
-      const { rejectFriend } = req.body;
-      const userId = req.user.id;
-      const userFriends = await userService.rejectRequest(userId, rejectFriend);
-      
-      return res.json(userFriends);
-    } catch (error) {
-      next(error)
-    }
-  }
-
-// ------------------------------ Delete friend --------------------------------- //
-
-  async deleteFriend(req, res, next) {
-    try {
-      const { deleteFriend } = req.body;
-      const userId = req.user.id;
-      const userFriends = await userService.deleteFriend(userId, deleteFriend);
-      
-      return res.json(userFriends);
-    } catch (error) {
-      next(error)
-    }
-  }
-
-// ------------------------------ Change Avatar -------------------------------- //
   
   async changeAvatar(req, res, next) {
     try {

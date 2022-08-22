@@ -5,18 +5,14 @@ module.exports = async (req, res, next) => {
   try {
       const authorizationHeader = req.headers.authorization;
       if (!authorizationHeader){
-        //console.log('no headers')
         return next(ApiError.UnauthorizedError());
       }
-
       const accessToken = authorizationHeader.split(" ")[1];
       if (!accessToken){
-        //console.log('no token')
         return next(ApiError.UnauthorizedError());
       }
       const userData = await tokenService.validateAccessToken(accessToken);
       if (!userData){
-        //console.log('validation failed');
         return next(ApiError.UnauthorizedError());
       }
       req.user = userData;

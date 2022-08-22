@@ -1,5 +1,4 @@
 const { Schema, model } = require('mongoose');
-// const mongoose = require('mongoose');
 
 const UserSchema = new Schema({
   username: { type: String, unique: true, required: true},
@@ -15,7 +14,7 @@ const UserSchema = new Schema({
   outcomingRequests: [String],
   incomingRequests: [String],
   avatar: {type: String, default: 'http://tachyons.io/img/avatar_1.jpg'},
-  createdVia: { type: String},
+  oauth: { type: Boolean},
 })
 
 module.exports = model('User', UserSchema);

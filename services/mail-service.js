@@ -11,7 +11,12 @@ class MailService {
       }
     })
   }
-  
+      /**
+   * @param to
+   *   Email of a user with unconfirmed email.
+   * @param link
+   *   Confirmation link.
+   */
   async sendActivationMail(to, link){
     await this.transporter.sendMail({
       from: "Social Network",

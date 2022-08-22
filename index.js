@@ -3,9 +3,10 @@ const cors = require('cors');
 require('dotenv').config()
 const PORT = process.env.PORT || 3001;
 const mongoose = require('mongoose');
-const userRouter = require('./route/user-route');
-const postRouter = require('./route/post-route');
-const oauthRouter = require('./route/oauth');
+const userRouter = require('./routes/user-route');
+const postRouter = require('./routes/post-route');
+const oauthRouter = require('./routes/oauth-route');
+const authRouter = require('./routes/auth-route');
 const errorMiddleware = require('./middleware/error-middleware');
 const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
@@ -20,6 +21,7 @@ app.use( express.json() );
 app.use( '/user', userRouter );
 app.use( '/post', postRouter );
 app.use( '/oauth', oauthRouter );
+app.use( '/auth', authRouter);
 app.use( '/documentation', swaggerUi.serve );
 app.use( errorMiddleware );
 

@@ -3,16 +3,24 @@ const userModel = require('../models/user-model');
 const tokenModel = require('../models/token-model');
 
 class TokenService {
-  
+  /**
+   * @param payload
+   *   User data(username, email, _id)
+   */
   generateTokens(payload) {
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_ACCESS, { expiresIn: '30m' }); // CHANGE TO 30m !!!!!
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_ACCESS, { expiresIn: '30m' });
     const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { expiresIn: '30d' });
     return { 
       accessToken,
       refreshToken
     };
   }
-
+  /**
+   * @param userId
+   *   User id
+   * @param refreshToken
+   *   Refresh token(token to renew access token)
+   */
   async saveToken(userId, refreshToken) {
     const tokenData = await tokenModel.findOne({ user: userId });
     if (tokenData){
@@ -22,26 +30,28 @@ class TokenService {
     const token = await tokenModel.create({ user: userId, refreshToken });
     return token;
   }
-
+  /**
+   * @param token
+   *   Access token
+   */
   async validateAccessToken(token) {
     try {
       const user = await userModel.findOne({token});
       if(!user){
         return null;
       }
-
-      // TODO: return jwt.verify(token, process.env.JWT_SECRET_ACCESS); can be?)
-      const userData = jwt.verify(token, process.env.JWT_SECRET_ACCESS);
-      return userData;
+      return jwt.verify(token, process.env.JWT_SECRET_ACCESS);
     } catch (error) {
       return null;
     }
   }
-
+  /**
+   * @param token
+   *   Refresh token
+   */
   validateRefreshToken(token) {
     try {
-      const userData = jwt.verify(token, process.env.JWT_SECRET_REFRESH);
-      return userData;
+      return jwt.verify(token, process.env.JWT_SECRET_REFRESH);
     } catch (error) {
       return null;
     }

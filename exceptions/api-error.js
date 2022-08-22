@@ -4,21 +4,21 @@ module.exports = class ApiError extends Error {
       this.status = status;
       this.errors = errors;
     }
+    
+    static BadRequest(message, errors = []) {
+      return new ApiError(400, message, errors);
+    }
 
     static UnauthorizedError() {
       return new ApiError(401, "Unauthorized user");
     }
 
-    static BadRequest(message, errors = []) {
-      return new ApiError(400, message, errors);
-    }
-
     static NotFound(message, errors = []) {
       return new ApiError(404, message, errors);
     }
-    // TODO: 405???
+    
     static Forbidden(message, errors = []) {
-      return new ApiError(405, message, errors);
+      return new ApiError(403, message, errors);
     }
 
     static Conflict(message, errors = []) {
