@@ -9,7 +9,7 @@ const UserDto = require('../dtos/user-dto');
    *   Profile information from Google or Facebook account
    */
 module.exports = async function(profile){
-  const user = await UserModel.findOne({ email: profile.emails[0].value});
+  const user = await UserModel.findOne({ oauthId: profile.id });
   if(user){
     const userDto = new UserDto(user);
     const tokens = tokenService.generateTokens({...userDto}); // without class
@@ -32,7 +32,8 @@ module.exports = async function(profile){
       fullName : profile.displayName, 
       emailConfirmationLink, 
       avatar : profile.photos[0].value,
-      oauth : true,
+      createdVia : profile.provider,
+      oauthId : profile.id,
       memberSince: new Date()});
       
       await mailService.sendActivationMail(profile.emails[0].value, `${process.env.API_URL}/user/confirm-email/${emailConfirmationLink}`);

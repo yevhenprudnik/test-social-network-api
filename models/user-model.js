@@ -14,7 +14,8 @@ const UserSchema = new Schema({
   outcomingRequests: [String],
   incomingRequests: [String],
   avatar: {type: String, default: 'http://tachyons.io/img/avatar_1.jpg'},
-  oauth: { type: Boolean},
+  createdVia : { type: String },
+  oauthId : { type: String, }
 })
 
 module.exports = model('User', UserSchema);
