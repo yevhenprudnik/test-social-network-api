@@ -48,8 +48,8 @@ class UserService {
     if (!user) {
       throw ApiError.NotFound('User is not found');
     }
-    if (user.oauth) {
-      throw ApiError.BadRequest(`You have been authorized via google/facebook`);
+    if (user.createdVia) {
+      throw ApiError.BadRequest(`You have been authorized via ${user.createdVia}`);
     }
     const isPasswordEqual = await bcrypt.compare(password, user.password);
     if (!isPasswordEqual) {
