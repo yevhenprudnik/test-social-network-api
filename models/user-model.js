@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const FriendSchema = require('./friend-model');
 
 const UserSchema = new Schema({
   username: { type: String, unique: true, required: true},
@@ -9,8 +10,7 @@ const UserSchema = new Schema({
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
   memberSince: { type: Date},
-  // TODO: add model
-  friends : [String],
+  friends : [ FriendSchema ],
   outcomingRequests: [String],
   incomingRequests: [String],
   avatar: {type: String, default: 'http://tachyons.io/img/avatar_1.jpg'},

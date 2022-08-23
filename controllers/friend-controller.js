@@ -50,6 +50,18 @@ class FriendController {
     }
   }
 
+  async getFriends(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const page = req.query.page || 0;
+      const userFriends = await userService.getFriends(userId, page);
+
+      return res.json(userFriends);
+    } catch (error) {
+      next(error)
+    }
+  }
+
 }
 
 module.exports = new FriendController();

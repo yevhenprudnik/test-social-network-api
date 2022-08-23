@@ -25,7 +25,7 @@ class PostService {
   async getUserPosts(postedBy, userId, page){
     const postPerPage = 20;
     const user = await UserModel.findById(userId);
-    if (!user.friends.includes(postedBy) && user.username !== postedBy) {
+    if (!user.friends.some(el => el.username === postedBy) && user.username !== postedBy) {
       throw ApiError.Forbidden("You can't see posts of users you are not friends with");
     }
     const posts = await PostModel.find({ postedBy })
@@ -39,7 +39,8 @@ class PostService {
   async getFriendsPosts(userId, page){
     const postPerPage = 20;
     const user = await UserModel.findById(userId);
-    const posts = await PostModel.find({ postedBy: {$in: user.friends}})
+    const friends = user.friends.map( el => el.username);
+    const posts = await PostModel.find({ postedBy: {$in: friends}})
     .skip(postPerPage*page)
     .limit(postPerPage)
     .sort([['date', -1]]);
@@ -57,7 +58,7 @@ class PostService {
       throw ApiError.NotFound('Post is not found');
     }
     const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+    if (!user.friends.some(el => el.username === postAuthor.username) && post.postedBy != user.username) {
       throw ApiError.Forbidden("You can't see posts of users you are not friends with");
     }
 
@@ -73,17 +74,17 @@ class PostService {
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    // if(!user) was useless check due to auth-middleware
     const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    // TODO: maybe would be better to create friend model?)
-    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+    if (!user.friends.some(el => el.username === postAuthor.username) && post.postedBy != user.username) {
       throw ApiError.Forbidden("You can't comment posts of users you are not friends with");
     }
-    // TODO: maybe would be better to create comment model?)
+
     post.comments.push({
       writtenBy: user.username,
       comment: comment,
+      date: new Date()
     })
+
     await post.save();
 
     return post;
@@ -95,19 +96,19 @@ class PostService {
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    // if(!user) was useless check due to auth-middleware
     const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.includes(postAuthor.username) && post.postedBy != user.username) {
+    if (!user.friends.some(el => el.username === postAuthor.username) && post.postedBy != user.username) {
       throw ApiError.Forbidden("You can't like posts of users you are not friends with");
     }
-    // TODO: maybe would be better to create like model?)
     const likes = post.likedBy;
-    // don't use indexOf, use includes instead (but I recommend to create a like model)
-    const index = likes.indexOf(user.username);
-    if (index > -1) {
-      post.likedBy.splice(index, 1);
+    const likeObj = likes.find(likeObj => likeObj.likedBy === user.username);
+    if (likeObj) {
+      post.likedBy.pull(likeObj.id);
     } else {
-      post.likedBy.push(user.username);
+      post.likedBy.push({
+        likedBy: user.username,
+        date: new Date()
+      });
     }
     await post.save();
 
@@ -123,7 +124,7 @@ class PostService {
       throw ApiError.NotFound('Post is not found');
     }
     if (postedBy !== post.postedBy) {
-      throw ApiError.BadRequest("Post can be modified only by it's author");
+      throw ApiError.Forbidden("Post can be modified only by it's author");
     } 
     post.text = newText;
     await post.save();

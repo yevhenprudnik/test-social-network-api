@@ -12,7 +12,7 @@ module.exports = async function(profile){
   const user = await UserModel.findOne({ oauthId: profile.id });
   if(user){
     const userDto = new UserDto(user);
-    const tokens = tokenService.generateTokens({...userDto}); // without class
+    const tokens = tokenService.generateTokens({...userDto});
     user.token = tokens.accessToken;
     await user.save();
 
@@ -39,7 +39,7 @@ module.exports = async function(profile){
       await mailService.sendActivationMail(profile.emails[0].value, `${process.env.API_URL}/user/confirm-email/${emailConfirmationLink}`);
       
       const userDto = new UserDto(user);
-      const tokens = tokenService.generateTokens({...userDto}); // without class
+      const tokens = tokenService.generateTokens({...userDto});
       user.token = tokens.accessToken;
 
       await user.save();

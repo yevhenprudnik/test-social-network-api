@@ -53,7 +53,8 @@ class PostController {
 
   async editPost(req, res, next) {
     try {
-      const { postId, newText } = req.body;
+      const postId = req.params.id;
+      const { newText } = req.body;
       const postedBy = req.user.username;
       const newPost = await postService.editPost(postedBy, postId, newText);
   
@@ -65,7 +66,7 @@ class PostController {
 
   async deletePost(req, res, next) {
     try {
-      const { postId } = req.body;
+      const postId = req.params.id;
       const postedBy = req.user.username;
       const result = await postService.deletePost(postedBy, postId);
 

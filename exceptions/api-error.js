@@ -13,14 +13,14 @@ module.exports = class ApiError extends Error {
       return new ApiError(401, "Unauthorized user");
     }
 
+    static Forbidden(message, errors = []) {
+      return new ApiError(403, message, errors);
+    }
+    
     static NotFound(message, errors = []) {
       return new ApiError(404, message, errors);
     }
     
-    static Forbidden(message, errors = []) {
-      return new ApiError(403, message, errors);
-    }
-
     static Conflict(message, errors = []) {
       return new ApiError(409, message, errors);
     }
