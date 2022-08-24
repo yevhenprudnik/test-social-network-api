@@ -12,7 +12,7 @@ class PostService {
    *   Post text(main content).
    */
   async createPost(postedBy, header, text) {
-    const post = await PostModel.create({ postedBy, header, text, date: new Date() });
+    const post = await PostModel.create({ postedBy, header, text });
     
     return post;
   }
@@ -24,14 +24,17 @@ class PostService {
    */
   async getUserPosts(postedBy, userId, page){
     const postPerPage = 20;
-    const user = await UserModel.findById(userId);
-    if (!user.friends.some(el => el.username === postedBy) && user.username !== postedBy) {
+    const user = await UserModel.findById(userId)
+    .populate('friends.addresseeId', 'username');
+    if (!user.friends.some(el => el.addresseeId.username === postedBy) && user.username !== postedBy) {
       throw ApiError.Forbidden("You can't see posts of users you are not friends with");
     }
-    const posts = await PostModel.find({ postedBy })
+    const postAuthor = await UserModel.findOne({ username : postedBy })
+    const posts = await PostModel.find({ postedBy: postAuthor.id })
+    .populate('postedBy comments.writtenBy likedBy.authorId', 'username')
     .skip(postPerPage*page)
     .limit(postPerPage)
-    .sort([['date', -1]]);
+    .sort([['createdAt', -1]]);
 
     return posts;
   }
@@ -39,11 +42,12 @@ class PostService {
   async getFriendsPosts(userId, page){
     const postPerPage = 20;
     const user = await UserModel.findById(userId);
-    const friends = user.friends.map( el => el.username);
+    const friends = user.friends.map( el => el.addresseeId);
     const posts = await PostModel.find({ postedBy: {$in: friends}})
+    .populate('postedBy comments.writtenBy likedBy.authorId', 'username')
     .skip(postPerPage*page)
     .limit(postPerPage)
-    .sort([['date', -1]]);
+    .sort([['createdAt', -1]]);
 
     return posts;
   }
@@ -52,13 +56,15 @@ class PostService {
    *   Post id.
    */
   async getPost(postId, userId){
-    const user = await UserModel.findById(userId);
-    const post = await PostModel.findById(postId);
+    const user = await UserModel.findById(userId)
+    .populate('friends.addresseeId', 'username');
+    const post = await PostModel.findById(postId)
+    .populate('postedBy comments.writtenBy likedBy.authorId', 'username');
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.some(el => el.username === postAuthor.username) && post.postedBy != user.username) {
+    const postAuthor = await UserModel.findOne({ username : post.postedBy.username });
+    if (!user.friends.some(el => el.addresseeId.username === postAuthor.username) && post.postedBy.username != user.username) {
       throw ApiError.Forbidden("You can't see posts of users you are not friends with");
     }
 
@@ -69,20 +75,21 @@ class PostService {
    *   Comment to be added.
    */
   async commentPost(userId, postId, comment) {
-    const user = await UserModel.findById(userId);
-    const post = await PostModel.findById(postId);
+    const user = await UserModel.findById(userId)
+    .populate('friends.addresseeId', 'username');
+    const post = await PostModel.findById(postId)
+    .populate('postedBy comments.writtenBy likedBy.authorId', 'username');
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.some(el => el.username === postAuthor.username) && post.postedBy != user.username) {
+    const postAuthor = await UserModel.findOne({ username : post.postedBy.username });
+    if (!user.friends.some(el => el.addresseeId.username === postAuthor.username) && post.postedBy.username != user.username) {
       throw ApiError.Forbidden("You can't comment posts of users you are not friends with");
     }
 
     post.comments.push({
-      writtenBy: user.username,
-      comment: comment,
-      date: new Date()
+      writtenBy: user.id,
+      comment: comment
     })
 
     await post.save();
@@ -91,24 +98,23 @@ class PostService {
   }
 
   async likePost(userId, postId) {
-    const post = await PostModel.findById(postId);
-    const user = await UserModel.findById(userId);
+    const user = await UserModel.findById(userId)
+    .populate('friends.addresseeId', 'username');
+    const post = await PostModel.findById(postId)
+    .populate('postedBy comments.writtenBy likedBy.authorId', 'username')
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    const postAuthor = await UserModel.findOne({ username : post.postedBy });
-    if (!user.friends.some(el => el.username === postAuthor.username) && post.postedBy != user.username) {
+    const postAuthor = await UserModel.findOne({ username : post.postedBy.username });
+    if (!user.friends.some(el => el.addresseeId.username === postAuthor.username) && post.postedBy.username != user.username) {
       throw ApiError.Forbidden("You can't like posts of users you are not friends with");
     }
     const likes = post.likedBy;
-    const likeObj = likes.find(likeObj => likeObj.likedBy === user.username);
+    const likeObj = likes.find(likeObj => likeObj.authorId.id == userId);
     if (likeObj) {
       post.likedBy.pull(likeObj.id);
     } else {
-      post.likedBy.push({
-        likedBy: user.username,
-        date: new Date()
-      });
+      post.likedBy.push({ authorId: userId });
     }
     await post.save();
 
@@ -119,11 +125,12 @@ class PostService {
    *   New post text to replace the old one.
    */
   async editPost(postedBy, postId, newText) {
-    const post = await PostModel.findById(postId);
+    const post = await PostModel.findById(postId)
+    .populate('comments.writtenBy likedBy.authorId', 'username');
     if (!post) {
       throw ApiError.NotFound('Post is not found');
     }
-    if (postedBy !== post.postedBy) {
+    if (postedBy != post.postedBy) {
       throw ApiError.Forbidden("Post can be modified only by it's author");
     } 
     post.text = newText;
@@ -134,11 +141,12 @@ class PostService {
 
   async deletePost(postedBy, postId) {
     try {
-      const post = await PostModel.findById(postId);
+      const post = await PostModel.findById(postId)
+      .populate('comments.writtenBy likedBy.authorId', 'username');
       if (!post) {
         throw ApiError.NotFound('Post is not found');
       }
-      if (postedBy !== post.postedBy) {
+      if (postedBy != post.postedBy) {
         throw ApiError.Forbidden("Post can be deleted only by it's author");
       } 
       await post.delete();

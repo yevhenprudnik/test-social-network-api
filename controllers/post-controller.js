@@ -5,7 +5,7 @@ class PostController {
   async createPost(req, res, next) {
     try {
       const { text, header } = req.body;
-      const postedBy = req.user.username;
+      const postedBy = req.user.id;
       const postData = await postService.createPost(postedBy, header, text);
 
       return res.json(postData);
@@ -55,7 +55,7 @@ class PostController {
     try {
       const postId = req.params.id;
       const { newText } = req.body;
-      const postedBy = req.user.username;
+      const postedBy = req.user.id;
       const newPost = await postService.editPost(postedBy, postId, newText);
   
       return res.json(newPost)
@@ -67,7 +67,7 @@ class PostController {
   async deletePost(req, res, next) {
     try {
       const postId = req.params.id;
-      const postedBy = req.user.username;
+      const postedBy = req.user.id;
       const result = await postService.deletePost(postedBy, postId);
 
       return res.json(result);

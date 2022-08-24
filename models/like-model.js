@@ -1,8 +1,7 @@
-const { Schema } = require('mongoose');
+const { Schema, SchemaTypes } = require('mongoose');
 
 const LikeSchema = new Schema({
-  likedBy: { type: String, required: true},
-  date: { type: Date, default: () => new Date()},
-})
+  authorId: { type: SchemaTypes.ObjectId, ref: "User" },
+},{ timestamps: true })
 
 module.exports = LikeSchema;

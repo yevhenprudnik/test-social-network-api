@@ -33,8 +33,7 @@ module.exports = async function(profile){
       emailConfirmationLink, 
       avatar : profile.photos[0].value,
       createdVia : profile.provider,
-      oauthId : profile.id,
-      memberSince: new Date()});
+      oauthId : profile.id });
       
       await mailService.sendActivationMail(profile.emails[0].value, `${process.env.API_URL}/user/confirm-email/${emailConfirmationLink}`);
       

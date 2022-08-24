@@ -8,7 +8,7 @@ class TokenService {
    *   User data(username, email, _id)
    */
   generateTokens(payload) {
-    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_ACCESS, { expiresIn: '30m' });
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_ACCESS, { expiresIn: '30d' });
     const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, { expiresIn: '30d' });
     return { 
       accessToken,

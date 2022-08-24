@@ -880,7 +880,7 @@
     "/user/user/{user}": {
       "get": {
         "summary": "Endpoint to get information about the user/users",
-        "description": "If the user you want to get information about is your friend you will get username, fullName, avatar, email, friends, memberSince, and id fields\nIf the user is not your friend you will get only username, fullName, avatar, and id fields",
+        "description": "If the user you want to get information about is your friend you will get username, fullName, avatar, email, friends, createdAt, and id fields\nIf the user is not your friend you will get only username, fullName, avatar, and id fields",
         "security" : [ { "bearerAuth": [] } ],
         "parameters": [
           {
@@ -1325,7 +1325,7 @@
           "type": "string",
           "example": "http://tachyons.io/img/avatar_1.jpg"
         },
-        "memberSince": {
+        "createdAt": {
           "type": "date",
           "example" : "2022-08-11T06:19:53.226+00:00"
         },
@@ -1370,7 +1370,7 @@
           "type": "string",
           "example": "Yevhen"
         },
-        "friendSince": {
+        "createdAt": {
           "type": "date",
           "example": "2022-08-23T09:33:11.246Z"
         },
