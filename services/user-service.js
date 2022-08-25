@@ -3,6 +3,7 @@ const FriendDto = require('../dtos/friend-dto');
 const StrangerDto = require('../dtos/stranger-dto');
 const ApiError = require('../exceptions/api-error');
 const UserModel = require('../models/user-model');
+const FriendModel = require('../models/friend-model');
 const bcrypt = require('bcrypt');
 const tokenService = require('./token-service');
 const mailService = require('./mail-service');
@@ -107,8 +108,8 @@ class UserService {
    */
   async getFullUserData(userId){
     const user = await UserModel.findById(userId)
-    .populate('friends.addresseeId incomingRequests outcomingRequests' , 'username')
-    .select('confirmedEmail username fullName email avatar friends incomingRequests outcomingRequests createdAt');
+    .populate('incomingRequests outcomingRequests', 'username')
+    .select('confirmedEmail username fullName email avatar incomingRequests outcomingRequests createdAt');
     if (!user) {
       throw ApiError.NotFound('User is not found');
     }
@@ -119,18 +120,18 @@ class UserService {
    *   Username or full name of a user to find
    */
   async getUserData(userId, userToFind){
-    const user = await UserModel.findById(userId)
-    .populate('friends.addresseeId' , 'username');
-    const users = await UserModel.find({ $or:[ { 'username' : userToFind}, { 'fullName' : userToFind } ]})
-    .populate('friends.addresseeId' , 'username');
-    const resultUsersArray = users.map(userObj => {
-      if (user.friends.some(friend => friend.addresseeId.username === userObj.username) || userObj.username === user.username) {
-        return new FriendDto(userObj);
-      } else {
-        return new StrangerDto(userObj);
-      }
-    })
-    return resultUsersArray;
+    const user = await UserModel.findOne({ $or:[ { 'username' : userToFind}, { 'fullName' : userToFind } ]});
+    if(!user) {
+      throw ApiError.NotFound('User is not found');
+    }
+    const isFriend = await FriendModel.findOne({$or: [
+      { requesterId: userId, receiverId : user.id },
+      { receiverId: userId, requesterId : user.id },
+    ]}) 
+    if (isFriend){
+      return new FriendDto(user);
+    }
+    return new StrangerDto(user);
   }
   /**
    * @param requestFriend
@@ -138,8 +139,8 @@ class UserService {
    */
   async sendRequest(userId, requestFriend){
     const user = await UserModel.findById(userId)
-    .populate("incomingRequests outcomingRequests friends.addresseeId", "username");
-    const outcomingRequestsUsernames = user.outcomingRequests.map(req => req.username);
+    .populate("incomingRequests outcomingRequests", "username");
+
     if (user.username === requestFriend) {
       throw ApiError.BadRequest(`You can't send request to yourself`);
     }
@@ -149,21 +150,24 @@ class UserService {
     if (user.outcomingRequests.some(el => el.username === requestFriend)) {
       throw ApiError.BadRequest(`You have already sent request to ${requestFriend}`);
     }
-    if (user.friends.some(el => el.addresseeId.username === requestFriend)) {
-      throw ApiError.BadRequest(`You are already friends with ${requestFriend}`);
-    }
     const userToBeFriend = await UserModel.findOne({ username : requestFriend });
     if (!userToBeFriend) {
       throw ApiError.NotFound('User is not found');
+    }
+    const isFriend = await FriendModel.findOne({$or: [
+      { requesterId: userId, receiverId : userToBeFriend.id },
+      { receiverId: userId, requesterId : userToBeFriend.id },
+    ]});
+    if (isFriend) {
+      throw ApiError.BadRequest(`You are already friends with ${requestFriend}`);
     }
     user.outcomingRequests.push(userToBeFriend.id);
     await user.save();
 
     userToBeFriend.incomingRequests.push(user.id);
-
     await userToBeFriend.save();
 
-    return { message: `Request was sent to ${requestFriend}`, outcomingRequests: [...outcomingRequestsUsernames, requestFriend]}
+    return { message: `Request was sent to ${requestFriend}`}
   }
   /**
    * @param acceptFriend
@@ -171,12 +175,8 @@ class UserService {
    */
   async acceptRequest(userId, acceptFriend){
     const user = await UserModel.findById(userId)
-    .populate("incomingRequests friends.addresseeId", "username");
-    const friendsUsernames = user.friends.map(fr => fr.addresseeId.username);
+    .populate("incomingRequests", "username");
 
-    if (user.friends.some(el => el.addresseeId.username === acceptFriend)) {
-      throw ApiError.BadRequest(`You are already friends with ${acceptFriend}`);
-    }
     const request = user.incomingRequests.find(el => el.username === acceptFriend);
     if (!request) {
       throw ApiError.BadRequest(`User ${acceptFriend} did not send you request`);
@@ -184,16 +184,24 @@ class UserService {
     const userToAccept = await UserModel.findOne({ username : acceptFriend })
     .populate("outcomingRequests", "username");
 
+    const isFriend = await FriendModel.findOne({$or: [
+      { requesterId: userId, receiverId : userToAccept.id },
+      { receiverId: userId, requesterId : userToAccept.id },
+    ]});
+    if (isFriend) {
+      throw ApiError.BadRequest(`You are already friends with ${acceptFriend}`);
+    }
+
+    await FriendModel.create({ requesterId : userToAccept.id, receiverId : userId });
+
     user.incomingRequests.pull(request.id);
-    user.friends.push({ addresseeId : userToAccept.id });
     await user.save();
 
     const acceptFriendRequest = userToAccept.outcomingRequests.find(el => el.username === user.username);
     userToAccept.outcomingRequests.pull(acceptFriendRequest.id);
-    userToAccept.friends.push({ addresseeId : user._id });
     
     await userToAccept.save();
-    return { message: `Request from ${acceptFriend} was accepted`, friends: [...friendsUsernames, acceptFriend]}
+    return { message: `Request from ${acceptFriend} was accepted` }
   }
   /**
    * @param rejectFriend
@@ -202,48 +210,49 @@ class UserService {
   async rejectRequest(userId, rejectFriend){
     const user = await UserModel.findById(userId)
     .populate("incomingRequests friends.addresseeId", "username");
-    const friendsUsernames = user.friends.map(fr => fr.addresseeId.username);
 
-    if (user.friends.some(el => el.addresseeId.username === rejectFriend)) {
-      throw ApiError.BadRequest(`You are already friends with ${rejectFriend}`);
-    }
     const request = user.incomingRequests.find(el => el.username === rejectFriend);
     if (!request) {
       throw ApiError.BadRequest(`User ${rejectFriend} did not send you request`);
     }
+    const userToReject = await UserModel.findOne({ username : rejectFriend })
+    .populate("outcomingRequests", "username");
+
+    const isFriend = await FriendModel.findOne({$or: [
+      { requesterId: userId, receiverId : userToReject.id },
+      { receiverId: userId, requesterId : userToReject.id },
+    ]});
+    if (isFriend) {
+      throw ApiError.BadRequest(`You are already friends with ${rejectFriend}`);
+    }
+
     user.incomingRequests.pull(request.id);
     await user.save();
 
-    const userToReject = await UserModel.findOne({ username : rejectFriend })
-    .populate("outcomingRequests", "username");;
     const rejectFriendRequest = userToReject.outcomingRequests.find(el => el.username === user.username);
     userToReject.outcomingRequests.pull(rejectFriendRequest.id);
-    
     await userToReject.save();
-    return { message: `Request from ${rejectFriend} was rejected`, friends: friendsUsernames}
+
+    return { message: `Request from ${rejectFriend} was rejected` }
   }
   /**
    * @param deleteFriend
    *   Username of a user you want to delete from friends list.
    */
   async deleteFriend(userId, deleteFriend){
-    const user = await UserModel.findById(userId)
-    .populate("friends.addresseeId", "username");
-    const friendsUsernames = user.friends.map(fr => fr.addresseeId.username).filter(friendName => friendName != deleteFriend);
-    const userFriend = user.friends.find(el => el.addresseeId.username === deleteFriend);
-    if (!userFriend) {
+    const userToDelete = await UserModel.findOne({ username : deleteFriend });
+    if (!userToDelete) {
+      throw ApiError.NotFound('User is not found');
+    }
+    const friendShip = await FriendModel.findOne({$or: [
+      { requesterId: userId, receiverId : userToDelete.id },
+      { receiverId: userId, requesterId : userToDelete.id },
+    ]});
+    if (!friendShip) {
       throw ApiError.BadRequest(`You are not friends with ${deleteFriend}`);
     }
-    user.friends.pull(userFriend.id);
-    await user.save();
-
-    const userToDelete = await UserModel.findOne({ username : deleteFriend })
-    .populate("friends.addresseeId", "username");
-    const friendFriend = userToDelete.friends.find(el => el.addresseeId.username === user.username);
-    userToDelete.friends.pull(friendFriend.id);
-    
-    await userToDelete.save();
-    return { message: `${deleteFriend} was removed from your friends list`, friends: friendsUsernames}
+    await friendShip.delete();
+    return { message: `${deleteFriend} was removed from your friends list` }
   }
   /**
    * @param newAvatar
@@ -262,13 +271,12 @@ class UserService {
    */
   async getFriends(userId, page) {
     const skipFriends = 100*page;
-    const userFriendsObj = await UserModel.findById(userId)
-    .populate({ path: 'friends.addresseeId', select: 'fullName email avatar'});
-    const sortedByDate = userFriendsObj.friends
-    .sort((objA, objB) => Number(objA.createdAt) - Number(objB.createdAt));
-    const limitedFriendsArray = sortedByDate.slice(skipFriends, skipFriends+100);
+    const userFriendsObj = await FriendModel.find({$or: [
+      { requesterId: userId},
+      { receiverId: userId},
+    ]}).sort({createdAt : -1}).skip(skipFriends).limit(100);
 
-    return limitedFriendsArray;
+    return userFriendsObj;
   }
   
 }

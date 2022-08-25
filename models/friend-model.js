@@ -1,7 +1,8 @@
-const { Schema, SchemaTypes } = require('mongoose');
+const { Schema, SchemaTypes, model } = require('mongoose');
 
 const FriendSchema = new Schema({
-  addresseeId: { type: SchemaTypes.ObjectId, ref: "User" }
+  requesterId : { type: SchemaTypes.ObjectId, ref: "User" },
+  receiverId: { type: SchemaTypes.ObjectId, ref: "User" }
 },{ timestamps: true })
 
-module.exports = FriendSchema;
+module.exports = model('Friend', FriendSchema);

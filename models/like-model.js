@@ -1,7 +1,8 @@
-const { Schema, SchemaTypes } = require('mongoose');
+const { Schema, SchemaTypes, model } = require('mongoose');
 
 const LikeSchema = new Schema({
-  authorId: { type: SchemaTypes.ObjectId, ref: "User" },
+  postId: { type: SchemaTypes.ObjectId, ref: "Post" },
+  authorId: { type: SchemaTypes.ObjectId, ref: "User" }
 },{ timestamps: true })
 
-module.exports = LikeSchema;
+module.exports = model('Like', LikeSchema);

@@ -1,5 +1,4 @@
 const { Schema, SchemaTypes, model } = require('mongoose');
-const FriendSchema = require('./friend-model');
 
 const UserSchema = new Schema({
   username: { type: String, unique: true, required: true},
@@ -9,7 +8,6 @@ const UserSchema = new Schema({
   token: { type: String},
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
-  friends : [ FriendSchema ],
   outcomingRequests: [{
     type: SchemaTypes.ObjectId, 
     ref: "User"
