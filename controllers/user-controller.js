@@ -24,6 +24,9 @@ class UserController {
   async signIn(req, res, next) {
     try {
       const { email, password } = req.body;
+      if (!email || !password) {
+        return next(ApiError.BadRequest('Credentials are required!'))
+      }
       const userData = await userService.signIn(email, password);
 
       res.cookie('refreshToken', userData.refreshToken, { maxAge: 30*24*60*60*1000, httpOnly: true, secure : true });

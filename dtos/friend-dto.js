@@ -3,9 +3,8 @@ module.exports = class FriendDto {
     this.username = model.username;
     this.fullName = model.fullName;
     this.email = model.email;
-    this.friends = model.friends;
     this.avatar = model.avatar;
-    this.memberSince = model.memberSince;
+    this.createdAt = model.createdAt;
     this.id = model._id;
   }
 }

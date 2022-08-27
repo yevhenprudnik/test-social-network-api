@@ -6,9 +6,9 @@ class FriendController {
     try {
       const requestFriend = req.params.user;
       const userId = req.user.id;
-      const outcomingRequests = await userService.sendRequest(userId, requestFriend);
+      const message = await userService.sendRequest(userId, requestFriend);
       
-      return res.json(outcomingRequests);
+      return res.json(message);
     } catch (error) {
       next(error)
     }
@@ -18,9 +18,9 @@ class FriendController {
     try {
       const acceptFriend = req.params.user;
       const userId = req.user.id;
-      const userFriends = await userService.acceptRequest(userId, acceptFriend);
+      const message = await userService.acceptRequest(userId, acceptFriend);
       
-      return res.json(userFriends);
+      return res.json(message);
     } catch (error) {
       next(error)
     }
@@ -30,9 +30,9 @@ class FriendController {
     try {
       const rejectFriend = req.params.user;
       const userId = req.user.id;
-      const userFriends = await userService.rejectRequest(userId, rejectFriend);
+      const message = await userService.rejectRequest(userId, rejectFriend);
       
-      return res.json(userFriends);
+      return res.json(message);
     } catch (error) {
       next(error)
     }
@@ -42,9 +42,33 @@ class FriendController {
     try {
       const deleteFriend = req.params.user;
       const userId = req.user.id;
-      const userFriends = await userService.deleteFriend(userId, deleteFriend);
+      const message = await userService.deleteFriend(userId, deleteFriend);
       
+      return res.json(message);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getFriends(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const page = req.query.page || 0;
+      const userFriends = await userService.getFriends(userId, page);
+
       return res.json(userFriends);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getFriendRequests(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const page = req.query.page || 0;
+      const friendsRequests = await userService.getFriendRequests(userId, page);
+
+      return res.json(friendsRequests);
     } catch (error) {
       next(error)
     }

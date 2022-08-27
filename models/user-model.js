@@ -1,4 +1,4 @@
-const { Schema, model } = require('mongoose');
+const { Schema, SchemaTypes, model } = require('mongoose');
 
 const UserSchema = new Schema({
   username: { type: String, unique: true, required: true},
@@ -8,14 +8,9 @@ const UserSchema = new Schema({
   token: { type: String},
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
-  memberSince: { type: Date},
-  // TODO: add model
-  friends : [String],
-  outcomingRequests: [String],
-  incomingRequests: [String],
   avatar: {type: String, default: 'http://tachyons.io/img/avatar_1.jpg'},
   createdVia : { type: String },
   oauthId : { type: String, }
-})
+},{ timestamps: true })
 
 module.exports = model('User', UserSchema);

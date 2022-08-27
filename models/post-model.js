@@ -1,17 +1,20 @@
-const { Schema, model } = require('mongoose');
+const { Schema, SchemaTypes, model } = require('mongoose');
+const CommentSchema = require('./comment-model');
+const LikeSchema = require('./like-model');
 
 const PostSchema = new Schema({
-  postedBy: { type: String, required: true },
+  postedBy: { type: SchemaTypes.ObjectId, ref: "User" },
   header: { type: String, required: true },
   text: { type: String, required: true },
-  date: { type: Date},
-  // TODO: add model
-  likedBy: [ String ],
+  likes: [{
+    type: SchemaTypes.ObjectId, 
+    ref: "Like"
+  }],
   comments: [{
-    writtenBy: { type: String },
-    comment: { type: String }
+    type: SchemaTypes.ObjectId, 
+    ref: "Comment"
   }]
-})
+},{ timestamps: true })
 
 
 module.exports = model('Post', PostSchema);

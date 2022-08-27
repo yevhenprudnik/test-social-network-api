@@ -30,7 +30,7 @@
     }
   },
   "paths": {
-    "/user/register" : {
+    "/auth/register" : {
       "post": {
         "summary": "Endpoint to register for the app, creating new account",
         "description" : "",
@@ -123,7 +123,7 @@
         }
       }
     },
-    "/user/signIn" : {
+    "/auth/signIn" : {
       "post": {
         "summary": "Endpoint to login to existing account",
         "description" : "Login to your account",
@@ -204,7 +204,7 @@
         }
       }
     },
-    "/user/signOut": {
+    "/auth/signOut": {
       "get": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to logout from app via access token",
@@ -234,7 +234,7 @@
         }
       }
     },
-    "/user/refresh": {
+    "/auth/refresh": {
       "get": {
         "summary": "Endpoint to renew an access token via refresh token",
         "description": "Refresh token is set in your cookies",
@@ -265,7 +265,7 @@
         }
       }
     },
-    "/user/check-auth": {
+    "/auth/check-auth": {
       "get": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to get authorized via access token and get additional data",
@@ -297,57 +297,42 @@
         }
       }
     },
-    "/post/posts": {
+    "/auth/confirm-email/{link}": {
       "get": {
-        "summary": "Endpoint to get posts/post list",
-        "security": [ { "bearerAuth": [] } ],
-        "description": "Response depending on query parameters you provide\n1)Nothing is provided - responses with and array of post objects that was created by your friends(if you have no friends responses with an empty array)\n2)Post Id is provided - response with a single post object only if it was created by friend\n3)Username is provided - response with an array of post objects that was created by the user only if he is your friend or you",
+        "summary": "Endpoint to confirm your email",
+        "description": "",
         "parameters": [
           {
-            "name": "postId",
-            "in": "query",
-            "example" : "62f3d91ac6ca216a5esd8197",
-            "description": "An ID of the post",
-            "type": "string"
-          },
-          {
-            "name": "postedBy",
-            "in": "query",
-            "example" : "yevhenprudnik",
-            "description": "Username of the user you want to get pots from",
+            "name": "link",
+            "in": "path",
+            "description": "randomly generated during registration string ",
+            "example" : "18868049-1368-45d3-8756-647fc91282b3",
             "type": "string"
           }
         ],
         "tags": [
-          "Posts"
+          "Auth"
         ],
         "responses": {
           "200": {
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Post"
-              }
+            "description": "Single string 'confirmed'",
+            "schema" : {
+              "type": "string",
+              "example" : "confirmed"
             }
           },
           "400": {
-            "description" : "Invalid ObjectId",
-            "schema" : { 
-              "$ref" : "#/definitions/InvalidIdError"
-            }
-          },
-          "404": {
-            "description": "Not found",
-            "schema": {
+            "description": "Invalid activation link",
+            "schema" : {
               "type": "object",
-              "properties" : {
+              "properties": {
                 "message": {
                   "type": "string",
-                  "example" : "Post is not found"
+                  "example": "Invalid activation link"
                 },
                 "errors": {
                   "type": "array",
-                  "example" : []
+                  "example": []
                 }
               }
             }
@@ -355,7 +340,7 @@
         }
       }
     },
-    "/post/create-post" : {
+    "/post/post" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to create a post",
@@ -417,24 +402,273 @@
         }
       }
     },
-    "/post/edit-post" : {
+    "/post/posts": {
+      "get": {
+        "summary": "Endpoint to get friends' posts list",
+        "security": [ { "bearerAuth": [] } ],
+        "description": "array of post objects that was created by your friends(if you have no friends responses with an empty array)",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "example" : "1",
+            "description": "Page of a posts list. If not specified - default value 0",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          }
+        }
+      }
+    },
+    "/post/posts/{postedBy}": {
+      "get": {
+        "summary": "Endpoint to get friends' posts list",
+        "security": [ { "bearerAuth": [] } ],
+        "description": "array of post objects that was created by your friend(postedBy)",
+        "parameters": [
+          {
+            "name": "postedBy",
+            "in": "path",
+            "example" : "yevhenprudnik",
+            "description": "Username of the user you want to get pots from",
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "example" : "1",
+            "description": "Page of a posts list. If not specified - default value 0",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "You can't see post of user you are not friends with"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/post/{id}": {
+      "get": {
+        "summary": "Endpoint to get specific post",
+        "security": [ { "bearerAuth": [] } ],
+        "description": "Single post object",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "Id of a post",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Post"
+              }
+            }
+          },
+          "400": {
+            "description" : "Invalid ObjectId",
+            "schema" : { 
+              "$ref" : "#/definitions/InvalidIDError"
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "You can't see post of user you are not friends with"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/post/{id}/comment" : {
+      "post": {
+        "security": [ { "bearerAuth": [] } ],
+        "summary": "Endpoint to comment someone's post",
+        "description" : "",
+        "parameters": [
+          {
+            "name": "Comment",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "comment": {
+                  "type": "string",
+                  "example" : "Some amazing comment",
+                  "required": true
+                }
+              }
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "Id of a post",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Posts"
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Post object",
+            "schema" : {
+              "$ref" : "#/definitions/Post"
+            }
+          },
+          "400": {
+            "description" : "Invalid ObjectId",
+            "schema" : { 
+              "$ref" : "#/definitions/InvalidIDError"
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "You can't see post of user you are not friends with"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Post is not found",
+            "schema" : {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post is not found"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/post/{id}/edit" : {
       "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to edit your post",
         "description" : "",
         "parameters": [
           {
-            "name": "Post Id and new content",
+            "name": "New content",
             "in": "body",
             "required": true,
             "schema": {
               "type": "object",
               "properties": {
-                "postId": {
-                  "type": "string",
-                  "example" : "62f3d92ac6ca21665e1d8197",
-                  "required": true
-                },
                 "newText": {
                   "type": "string",
                   "example" : "Some amazing text(but better)",
@@ -442,6 +676,14 @@
                 }
               }
             }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "Id of a post",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -454,8 +696,20 @@
               "$ref" : "#/definitions/Post"
             }
           },
-          "400" : {
-            "description" : "Post can be modified only by it's author",
+          "400": {
+            "description" : "Invalid ObjectId",
+            "schema" : { 
+              "$ref" : "#/definitions/InvalidIDError"
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema" : {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "schema": {
               "type": "object",
               "properties" : {
@@ -469,36 +723,23 @@
                 }
               }
             }
-          },
-          "401" : {
-            "description" : "Access token is not valid",
-            "schema" : {
-              "$ref" : "#/definitions/UnauthorizedError"
-            }
           }
         }
       }
     },
-    "/post/like-post" : {
-      "post": {
+    "/post/post/{id}/like" : {
+      "get": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to like someone's post",
         "description" : "",
         "parameters": [
           {
-            "name": "Post Id",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "postId": {
-                  "type": "string",
-                  "example" : "62f3d92ac6ca21665e1d8197",
-                  "required": true
-                }
-              }
-            }
+            "name": "id",
+            "in": "path",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "Id of a post",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -511,10 +752,32 @@
               "$ref" : "#/definitions/Post"
             }
           },
+          "400": {
+            "description" : "Invalid ObjectId",
+            "schema" : { 
+              "$ref" : "#/definitions/InvalidIDError"
+            }
+          },
           "401" : {
             "description" : "Access token is not valid",
             "schema": {
               "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "You can't like posts of users you are not friends with"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
             }
           },
           "404" : {
@@ -536,88 +799,19 @@
         }
       }
     },
-    "/post/comment-post" : {
-      "post": {
-        "security": [ { "bearerAuth": [] } ],
-        "summary": "Endpoint to comment someone's post",
-        "description" : "",
-        "parameters": [
-          {
-            "name": "Post Id and comment",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "postId": {
-                  "type": "string",
-                  "example" : "62f3d92ac6ca21665e1d8197",
-                  "required": true
-                },
-                "comment": {
-                  "type": "string",
-                  "example" : "Some amazing comment",
-                  "required": true
-                }
-              }
-            }
-          }
-        ],
-        "tags": [
-          "Posts"
-        ],
-        "responses" : {
-          "200" : {
-            "description" : "Post object",
-            "schema" : {
-              "$ref" : "#/definitions/Post"
-            }
-          },
-          "401" : {
-            "description" : "Access token is not valid",
-            "schema": {
-              "$ref" : "#/definitions/UnauthorizedError"
-            }
-          },
-          "404" : {
-            "description" : "Post is not found",
-            "schema" : {
-              "type": "object",
-              "properties" : {
-                "message": {
-                  "type": "string",
-                  "example" : "Post is not found"
-                },
-                "errors": {
-                  "type": "array",
-                  "example" : []
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/post/delete-post" : {
+    "/post/post/{id}/delete" : {
       "delete": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to delete your post",
         "description" : "",
         "parameters": [
           {
-            "name": "Post Id",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "postId": {
-                  "type": "string",
-                  "example" : "62f3d92ac6ca21665e1d8197",
-                  "required": true
-                }
-              }
-            }
+            "name": "id",
+            "in": "path",
+            "example" : "62f3d92ac6ca21665e1d8197",
+            "description": "Id of a post",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -636,10 +830,32 @@
               }
             }
           },
+          "400": {
+            "description" : "Invalid ObjectId",
+            "schema" : { 
+              "$ref" : "#/definitions/InvalidIDError"
+            }
+          },
           "401" : {
             "description" : "Access token is not valid",
             "schema": {
               "$ref" : "#/definitions/UnauthorizedError"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "schema": {
+              "type": "object",
+              "properties" : {
+                "message": {
+                  "type": "string",
+                  "example" : "Post can be deleted only by it's author"
+                },
+                "errors": {
+                  "type": "array",
+                  "example" : []
+                }
+              }
             }
           },
           "404" : {
@@ -661,18 +877,19 @@
         }
       }
     },
-    "/user/user": {
+    "/user/user/{user}": {
       "get": {
         "summary": "Endpoint to get information about the user/users",
-        "description": "If the user you want to get information about is your friend you will get username, fullName, avatar, email, friends, memberSince, and id fields\nIf the user is not your friend you will get only username, fullName, avatar, and id fields",
+        "description": "If the user you want to get information about is your friend you will get username, fullName, avatar, email, friends, createdAt, and id fields\nIf the user is not your friend you will get only username, fullName, avatar, and id fields",
         "security" : [ { "bearerAuth": [] } ],
         "parameters": [
           {
             "name": "user",
-            "in": "query",
+            "in": "path",
             "example" : "Mike",
             "description": "Username or fullName of the user you want to get information about",
-            "type": "string"
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -688,88 +905,28 @@
               }
             }
           },
-          "404" : {
-            "description" : "User is not found",
+          "401" : {
+            "description" : "Access token is not valid",
             "schema": {
-              "type": "object",
-              "properties" : {
-                "message": {
-                  "type": "string",
-                  "example" : "User is not found"
-                },
-                "errors": {
-                  "type": "array",
-                  "example" : []
-                }
-              }
+              "$ref" : "#/definitions/UnauthorizedError"
             }
           }
         }
       }
     },
-    "/user/confirm-email/{link}": {
+    "/user/send-request/{user}": {
       "get": {
-        "summary": "Endpoint to confirm your email",
-        "description": "",
-        "parameters": [
-          {
-            "name": "link",
-            "in": "path",
-            "description": "randomly generated during registration string ",
-            "example" : "18868049-1368-45d3-8756-647fc91282b3",
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Users"
-        ],
-        "responses": {
-          "200": {
-            "description": "Single string 'confirmed'",
-            "schema" : {
-              "type": "string",
-              "example" : "confirmed"
-            }
-          },
-          "400": {
-            "description": "Invalid activation link",
-            "schema" : {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "example": "Invalid activation link"
-                },
-                "errors": {
-                  "type": "array",
-                  "example": []
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/user/send-request": {
-      "post": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to send request to become a friend with user",
         "description" : "",
         "parameters": [
           {
-            "name": "Username of a user you want to be friend with",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "requestFriend": {
-                  "type": "string",
-                  "example" : "JackNicholson",
-                  "required": true
-                }
-              }
-            }
+            "name": "user",
+            "in": "path",
+            "example" : "Mike",
+            "description": "username of a user",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -824,26 +981,54 @@
         }
       }
     },
-    "/user/accept-request" : {
-      "post": {
+    "/user/friends" : {
+      "get": {
+        "summary": "Endpoint to get friends objects",
+        "security": [ { "bearerAuth": [] } ],
+        "description": "array of friend objects(if you have no friends responses with an empty array)",
+        "parameters" : [
+          {
+            "name": "page",
+            "in": "query",
+            "example" : "1",
+            "description": "Page of a friends list. If not specified - default value 0",
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Friend"
+              }
+            }
+          },
+          "401" : {
+            "description" : "Access token is not valid",
+            "schema": {
+              "$ref" : "#/definitions/UnauthorizedError"
+            }
+          }
+        }
+      }
+    },
+    "/user/accept-request/{user}" : {
+      "get": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to accept request to become a friend with user",
         "description" : "",
         "parameters": [
           {
-            "name": "Username of a user you want to accept request from",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "acceptFriend": {
-                  "type": "string",
-                  "example" : "JackNicholson",
-                  "required": true
-                }
-              }
-            }
+            "name": "user",
+            "in": "path",
+            "example" : "Mike",
+            "description": "username of a user",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -898,26 +1083,19 @@
         }
       }
     },
-    "/user/reject-request" : {
-      "post": {
+    "/user/reject-request/{user}" : {
+      "get": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to reject request from a user",
         "description" : "",
         "parameters": [
           {
-            "name": "Username of a user you want to reject",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "rejectFriend": {
-                  "type": "string",
-                  "example" : "JackNicholson",
-                  "required": true
-                }
-              }
-            }
+            "name": "user",
+            "in": "path",
+            "example" : "Mike",
+            "description": "username of a user",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -972,26 +1150,19 @@
         }
       }
     },
-    "/user/delete-friend" : {
+    "/user/delete-friend/{user}" : {
       "delete": {
         "security": [ { "bearerAuth": [] } ],
         "summary": "Endpoint to delete user from your friends",
         "description" : "",
         "parameters": [
           {
-            "name": "Username of a user you want to delete from your friends",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "deleteFriend": {
-                  "type": "string",
-                  "example" : "JackNicholson",
-                  "required": true
-                }
-              }
-            }
+            "name": "user",
+            "in": "path",
+            "example" : "Mike",
+            "description": "username of a user",
+            "type": "string",
+            "required": true
           }
         ],
         "tags": [
@@ -1084,22 +1255,6 @@
             "schema" : {
               "$ref" : "#/definitions/UnauthorizedError"
             }
-          },
-          "404" : {
-            "description" : "User is not found",
-            "schema": {
-              "type": "object",
-              "properties" : {
-                "message": {
-                  "type": "string",
-                  "example" : "User is not found"
-                },
-                "errors": {
-                  "type": "array",
-                  "example" : []
-                }
-              }
-            }
           }
         }
       }
@@ -1170,7 +1325,7 @@
           "type": "string",
           "example": "http://tachyons.io/img/avatar_1.jpg"
         },
-        "memberSince": {
+        "createdAt": {
           "type": "date",
           "example" : "2022-08-11T06:19:53.226+00:00"
         },
@@ -1181,8 +1336,7 @@
         "friends": {
           "type": "array",
           "items" : {
-            "type" : "string",
-            "example" : "Alex"
+            "$ref" : "#/definitions/Friend"
           }
         },
         "outcomingRequests": {
@@ -1209,34 +1363,32 @@
       "description" : "User friend object",
       "type": "object",
       "properties": {
-        "id" : {
+        "_id" : {
           "$ref": "#/definitions/ObjectId"
         },
         "username": {
           "type": "string",
           "example": "Yevhen"
         },
-        "fullName": {
-          "type": "string",
-          "example": "Yevhen Prudnik"
-        },
-        "email": {
-          "type": "string",
-          "example": "yevhen@gmail.com"
-        },
-        "avatar": {
-          "type": "string",
-          "example": "http://tachyons.io/img/avatar_1.jpg"
-        },
-        "memberSince": {
+        "createdAt": {
           "type": "date",
-          "example" : "2022-08-11T06:19:53.226+00:00"
+          "example": "2022-08-23T09:33:11.246Z"
         },
-        "friends": {
-          "type": "array",
-          "items" : {
-            "type" : "string",
-            "example" : "Alex"
+        "additionalInfo":{
+          "type": "object",
+          "properties" : {
+            "fullName": {
+              "type": "string",
+              "example": "Yevhen Prudnik"
+            },
+            "email": {
+              "type": "string",
+              "example": "yevhen@gmail.com"
+            },
+            "avatar": {
+              "type": "string",
+              "example": "http://tachyons.io/img/avatar_1.jpg"
+            }
           }
         }
       }
@@ -1284,8 +1436,17 @@
         "likedBy": {
           "type": "array",
           "items" : {
-            "type" : "string",
-            "example" : "Alex"
+            "type" : "object",
+            "properties" : {
+              "likedBy" : {
+                "type" : "string",
+                "example" : "Alex"
+              }, 
+              "date" : {
+                "type": "date",
+                "example": "2022-08-23T09:33:11.246Z"
+              }
+            }
           }
         },
         "date" : {
@@ -1300,6 +1461,10 @@
               "writtenBy": {
                 "type" : "string",
                 "example" : "Alex"
+              },
+              "date" : {
+                "type": "date",
+                "example": "2022-08-23T09:33:11.246Z"
               },
               "comment": {
                 "type": "string",
