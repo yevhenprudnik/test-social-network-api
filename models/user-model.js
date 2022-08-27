@@ -8,14 +8,6 @@ const UserSchema = new Schema({
   token: { type: String},
   confirmedEmail: {type: Boolean, default: false},
   emailConfirmationLink: {type: String},
-  outcomingRequests: [{
-    type: SchemaTypes.ObjectId, 
-    ref: "User"
-  }],
-  incomingRequests: [{
-    type: SchemaTypes.ObjectId, 
-    ref: "User"
-  }],
   avatar: {type: String, default: 'http://tachyons.io/img/avatar_1.jpg'},
   createdVia : { type: String },
   oauthId : { type: String, }
