@@ -50,8 +50,8 @@ class PostService {
       {
         $match: {
           $or : [ 
-            { requesterId : mongoose.Types.ObjectId(userId) }, 
-            { receiverId : mongoose.Types.ObjectId(userId) } 
+            { requesterId : mongoose.Types.ObjectId(userId), status : 'accepted' }, 
+            { receiverId : mongoose.Types.ObjectId(userId), status : 'accepted' } 
           ]
         }
       },
