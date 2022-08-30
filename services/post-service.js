@@ -4,6 +4,8 @@ const PostModel = require('../models/post-model');
 const FriendModel = require('../models/friend-model');
 const CommentModel = require('../models/comment-model');
 const LikeModel = require('../models/like-model');
+const mongoose = require('mongoose');
+
 class PostService {
     /**
    * @param postedBy
@@ -44,24 +46,77 @@ class PostService {
 
   async getFriendsPosts(userId, page){
     const postPerPage = 20;
-    const friendsObjects = await FriendModel.find({$or: [
-      { requesterId: userId},
-      { receiverId: userId},
-    ]});
-    const friendsIds = friendsObjects.map((obj) => {
-      if (obj.receiverId != userId){
-        return obj.receiverId;
-      } else {
-        return obj.requesterId;
+    const FriendsPosts = await FriendModel.aggregate([
+      {
+        $match: {
+          $or : [ 
+            { requesterId : mongoose.Types.ObjectId(userId) }, 
+            { receiverId : mongoose.Types.ObjectId(userId) } 
+          ]
+        }
+      },
+      {
+        $project:
+          {
+            "_id" : 0,
+            "friendId" :
+            {
+              $switch:
+                {
+                  branches: [
+                    {
+                      case: { $eq : [ "$requesterId", mongoose.Types.ObjectId(userId) ] },
+                      then: "$receiverId"
+                    },
+                    {
+                      case: { $eq : [ "$receiverId", mongoose.Types.ObjectId(userId) ] },
+                      then: "$requesterId"
+                    }
+                  ],
+                  default: "Wrong friend object"
+                }
+            }
+          }
+      },
+      {
+        $lookup : {
+          from : "posts",
+          localField : "friendId",
+          foreignField : "postedBy",
+          as: "FriendsPosts"
+        }
+      },
+      {
+        $unwind : "$FriendsPosts"
+      },
+      {
+        $group : {
+          _id : null,
+          FriendsPosts : { $addToSet : '$FriendsPosts' }
+        }
+      },
+      {
+        $unwind : "$FriendsPosts"
+      },
+      {
+        $replaceRoot: {
+          newRoot: "$FriendsPosts"
+        }
+      },
+      {
+        $sort : {
+          createdAt : -1
+        }
+      },
+      {
+        $skip : postPerPage*page
+      },
+      {
+        $limit : postPerPage
       }
-    })
-    const posts = await PostModel.find({ postedBy: {$in: friendsIds}})
-    .populate('postedBy', 'username')
-    .skip(postPerPage*page)
-    .limit(postPerPage)
-    .sort([['createdAt', -1]]);
-
-    return posts;
+    ])
+    
+    return FriendsPosts;
   }
   /**
    * @param postId
