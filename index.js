@@ -11,6 +11,7 @@ const errorMiddleware = require('./middleware/error-middleware');
 const cookieParser = require('cookie-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swagger.json');
+const parser = require('ua-parser-js');
 
 const app = express();
 
@@ -29,6 +30,11 @@ app.get('/documentation', swaggerUi.setup(swaggerDocument));
 
 app.get('/', (req, res) => {
   res.json(`Documentation: ${process.env.API_URL}/documentation`);
+})
+
+app.get('/user-agent', (req, res) => {
+  var ua = parser(req.headers['user-agent']);
+  res.json(ua);
 })
 
 const start = (async () => {
